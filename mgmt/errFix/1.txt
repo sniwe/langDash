@@ -1,0 +1,61 @@
+app-runtime.js:168 [audioTest][2026-03-31T13:47:10.693Z][subseg] render Object
+app-runtime.js:4487 Uncaught ReferenceError: childRecallPosition is not defined
+    at app-runtime.js:4487:9
+    at Array.forEach (<anonymous>)
+    at renderSubSegValueCardNode (app-runtime.js:4468:20)
+    at app-runtime.js:4299:7
+    at Array.forEach (<anonymous>)
+    at renderSubSegValuePanel (app-runtime.js:4295:12)
+    at activateSubSegValueSelection (app-runtime.js:4008:5)
+    at handleKeyDown (app-runtime.js:757:11)
+app-runtime.js:168 [audioTest][2026-03-31T13:47:11.351Z][subseg] render Object
+app-runtime.js:4487 Uncaught ReferenceError: childRecallPosition is not defined
+    at app-runtime.js:4487:9
+    at Array.forEach (<anonymous>)
+    at renderSubSegValueCardNode (app-runtime.js:4468:20)
+    at app-runtime.js:4299:7
+    at Array.forEach (<anonymous>)
+    at renderSubSegValuePanel (app-runtime.js:4295:12)
+    at HTMLAudioElement.updateUi (app-runtime.js:5481:7)
+app-runtime.js:168 [audioTest][2026-03-31T13:47:15.307Z][subseg] render Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:16.555Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:17.214Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:17.418Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:17.799Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:18.256Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:18.952Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:19.004Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:19.929Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:20.044Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:20.106Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:20.545Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:20.601Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:20.785Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:20.909Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:21.024Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:21.098Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:21.286Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:21.400Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:21.634Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:21.815Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:21.934Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:22.033Z][subseg] beforeinput Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:23.021Z][subseg] render Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:26.887Z][subseg] render Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:27.861Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:27.889Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:27.989Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:28.366Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:28.817Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:28.818Z][subseg] createChild:before-push Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:28.818Z][subseg] createChild:after-push Object
+app-runtime.js:168 [audioTest][2026-03-31T13:47:28.818Z][subseg] render Object
+app-runtime.js:4487 Uncaught ReferenceError: childRecallPosition is not defined
+    at app-runtime.js:4487:9
+    at Array.forEach (<anonymous>)
+    at renderSubSegValueCardNode (app-runtime.js:4468:20)
+    at app-runtime.js:4299:7
+    at Array.forEach (<anonymous>)
+    at renderSubSegValuePanel (app-runtime.js:4295:12)
+    at handleFocusedSubSegCardKeyDown (app-runtime.js:4952:9)
+    at handleKeyDown (app-runtime.js:591:11)

@@ -1,0 +1,1 @@
+add errFix & toDo automation standard to AGENTS (user root)

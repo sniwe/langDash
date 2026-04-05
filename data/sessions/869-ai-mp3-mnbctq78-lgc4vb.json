@@ -1,0 +1,780 @@
+{
+  "id": "869-ai-mp3-mnbctq78-lgc4vb",
+  "owner": "rhys",
+  "savedAt": "2026-04-05T06:34:37.241Z",
+  "updatedAt": "2026-04-05T06:34:37.241Z",
+  "revision": 675,
+  "file": {
+    "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
+    "type": "audio/mpeg",
+    "size": 9248017,
+    "lastModified": 1774317852186
+  },
+  "playback": {
+    "checkpoints": [
+      38.651136,
+      84.650496,
+      184.670493
+    ],
+    "subSegs": [
+      {
+        "start": 5.933508,
+        "end": 10.390865,
+        "createdAt": "2026-03-30T02:54:25.006Z"
+      },
+      {
+        "start": 10.886503,
+        "end": 14.129537,
+        "createdAt": "2026-03-30T23:25:35.868Z"
+      },
+      {
+        "start": 16.842343,
+        "end": 19.498242,
+        "createdAt": "2026-03-30T23:25:44.525Z"
+      },
+      {
+        "start": 23.16047,
+        "end": 27.195763,
+        "createdAt": "2026-03-30T23:25:54.925Z"
+      },
+      {
+        "start": 31.365516,
+        "end": 32.849649,
+        "createdAt": "2026-03-30T23:26:04.662Z"
+      },
+      {
+        "start": 34.88552,
+        "end": 38.365684,
+        "createdAt": "2026-03-30T23:26:16.763Z"
+      },
+      {
+        "start": 50.178856,
+        "end": 52.932184,
+        "createdAt": "2026-04-01T02:13:52.070Z"
+      },
+      {
+        "start": 54.761806,
+        "end": 57.953221,
+        "createdAt": "2026-04-01T02:20:01.798Z"
+      },
+      {
+        "start": 61.326849,
+        "end": 63.51752,
+        "createdAt": "2026-04-01T02:30:42.070Z"
+      },
+      {
+        "start": 71.584189,
+        "end": 74.177385,
+        "createdAt": "2026-04-01T02:34:16.977Z"
+      },
+      {
+        "start": 75.29619,
+        "end": 78.133736,
+        "createdAt": "2026-04-01T10:16:27.116Z"
+      },
+      {
+        "start": 80.27297,
+        "end": 83.891958,
+        "createdAt": "2026-04-01T02:39:31.005Z"
+      },
+      {
+        "start": 87.666876,
+        "end": 90.918623,
+        "createdAt": "2026-04-01T12:32:07.324Z"
+      },
+      {
+        "start": 94.454515,
+        "end": 98.21963,
+        "createdAt": "2026-04-05T06:32:49.378Z"
+      }
+    ],
+    "subSegValueEntries": {
+      "5.934|10.391": [
+        {
+          "nodeId": "card-mnclzljd-1",
+          "value": "baoluo guleiemuis a",
+          "html": "baoluo guleiemu<br>is a ",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T01:38:58.343Z",
+          "children": [
+            {
+              "nodeId": "card-mnfepupv-1",
+              "value": "baoluo",
+              "html": "baoluo",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:08:37.315Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 6,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnfew15a-1",
+              "value": "baoluo",
+              "html": "baoluo",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:13:25.582Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 6,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnen26xk-1",
+              "value": "guleiemu",
+              "html": "guleiemu",
+              "commentHtml": "",
+              "createdAt": "2026-03-31T13:14:23.768Z",
+              "children": [],
+              "anchorStart": 7,
+              "anchorEnd": 15,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        },
+        {
+          "nodeId": "card-mndtx1fv-1",
+          "value": "",
+          "html": "",
+          "commentHtml": "",
+          "createdAt": "2026-03-30T23:38:34.507Z",
+          "children": [],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": true
+        },
+        {
+          "nodeId": "card-mndtx5oz-2",
+          "value": "",
+          "html": "",
+          "commentHtml": "",
+          "createdAt": "2026-03-30T23:38:40.019Z",
+          "children": [],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": true
+        }
+      ],
+      "34.886|38.366": [
+        {
+          "nodeId": "card-mndthjsx-1",
+          "value": "this is a newrich input",
+          "html": "this is a <div>new</div><div>rich input</div>",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T02:09:16.757Z",
+          "children": [
+            {
+              "nodeId": "card-mnfeqruk-4",
+              "value": "rich",
+              "html": "rich",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:09:20.252Z",
+              "children": [],
+              "anchorStart": 13,
+              "anchorEnd": 17,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "10.887|14.130": [
+        {
+          "nodeId": "card-mnen3ine-2",
+          "value": "so it seems likeon new cardsit might work",
+          "html": "so it seems like<div>on new cards</div><div>it might work</div>",
+          "commentHtml": "",
+          "createdAt": "2026-03-31T13:19:45.045Z",
+          "children": [
+            {
+              "nodeId": "card-mnenfwsm-1",
+              "value": "might",
+              "html": "might",
+              "commentHtml": "",
+              "createdAt": "2026-03-31T13:25:03.814Z",
+              "children": [],
+              "anchorStart": 31,
+              "anchorEnd": 36,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnfeq41e-2",
+              "value": "might",
+              "html": "might",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:08:49.394Z",
+              "children": [],
+              "anchorStart": 31,
+              "anchorEnd": 36,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnfehh9h-1",
+              "value": "work",
+              "html": "work",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:02:06.629Z",
+              "children": [],
+              "anchorStart": 37,
+              "anchorEnd": 41,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "16.842|19.498": [
+        {
+          "nodeId": "card-mnenfxy2-2",
+          "value": "retry",
+          "html": "retry",
+          "commentHtml": "",
+          "createdAt": "2026-03-31T13:25:10.671Z",
+          "children": [
+            {
+              "nodeId": "card-mnfeq8zd-3",
+              "value": "retry",
+              "html": "retry",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:08:55.801Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 5,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "23.160|27.196": [
+        {
+          "nodeId": "card-mnenr50w-1",
+          "value": "this is a test",
+          "html": "this is a test",
+          "commentHtml": "",
+          "createdAt": "2026-03-31T13:33:53.622Z",
+          "children": [],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "31.366|32.850": [
+        {
+          "nodeId": "card-mneo8g6j-1",
+          "value": "thus it begins again",
+          "html": "thus it begins again",
+          "commentHtml": "",
+          "createdAt": "2026-03-31T13:47:23.021Z",
+          "children": [
+            {
+              "nodeId": "card-mneowz12-1",
+              "value": "thus",
+              "html": "thus",
+              "commentHtml": "",
+              "createdAt": "2026-03-31T14:06:19.478Z",
+              "children": [
+                {
+                  "nodeId": "card-mnep0p8a-2",
+                  "value": "us",
+                  "html": "us",
+                  "commentHtml": "",
+                  "createdAt": "2026-03-31T14:09:13.402Z",
+                  "children": [],
+                  "anchorStart": 2,
+                  "anchorEnd": 4,
+                  "isStarter": false
+                }
+              ],
+              "anchorStart": 0,
+              "anchorEnd": 4,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "50.179|52.932": [
+        {
+          "nodeId": "card-mnfewn52-2",
+          "value": "this is another testboooop",
+          "html": "this is another test<div>boooop</div>",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T02:14:06.632Z",
+          "children": [
+            {
+              "nodeId": "card-mnff192a-1",
+              "value": "this",
+              "html": "this",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:17:29.122Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 4,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnfex0sp-3",
+              "value": "another",
+              "html": "another",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:14:11.785Z",
+              "children": [],
+              "anchorStart": 8,
+              "anchorEnd": 15,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "54.762|57.953": [
+        {
+          "nodeId": "card-mnff4l59-1",
+          "value": "they know that jpaanese watches are cheapbut they didn't expect...",
+          "html": "they know that jpaanese watches are cheap<div>but they didn't expect... </div>",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T02:20:32.715Z",
+          "children": [
+            {
+              "nodeId": "card-mnff5c88-2",
+              "value": "jpaanese",
+              "html": "jpaanese",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:20:39.848Z",
+              "children": [],
+              "anchorStart": 15,
+              "anchorEnd": 23,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnff5kj6-3",
+              "value": "they didn't expect",
+              "html": "they didn't expect",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:20:50.610Z",
+              "children": [],
+              "anchorStart": 45,
+              "anchorEnd": 63,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "61.327|63.518": [
+        {
+          "nodeId": "card-mnffibuj-1",
+          "value": "the secondis this",
+          "html": "the second<div>is this</div>",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T02:31:02.963Z",
+          "children": [
+            {
+              "nodeId": "card-mnffit8k-2",
+              "value": "the",
+              "html": "the",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:31:08.420Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 3,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnffj283-3",
+              "value": "this",
+              "html": "this",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:31:20.067Z",
+              "children": [],
+              "anchorStart": 13,
+              "anchorEnd": 17,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "71.584|74.177": [
+        {
+          "nodeId": "card-mnffmwxd-1",
+          "value": "testing againfrom a new linethis will be it?",
+          "html": "testing again<div>from a new line</div><div>this will be it?</div>",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T02:34:40.851Z",
+          "children": [
+            {
+              "nodeId": "card-mnffnhgy-2",
+              "value": "testing",
+              "html": "testing",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:34:46.450Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 7,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnffnmzf-3",
+              "value": "a",
+              "html": "a",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:34:53.595Z",
+              "children": [],
+              "anchorStart": 18,
+              "anchorEnd": 19,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnffnv2w-4",
+              "value": "a",
+              "html": "a",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:35:04.088Z",
+              "children": [],
+              "anchorStart": 18,
+              "anchorEnd": 19,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnffo8ck-6",
+              "value": "new",
+              "html": "new",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:35:21.284Z",
+              "children": [],
+              "anchorStart": 20,
+              "anchorEnd": 23,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnffo3sv-5",
+              "value": "it",
+              "html": "it",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:35:15.391Z",
+              "children": [],
+              "anchorStart": 41,
+              "anchorEnd": 43,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "80.273|83.892": [
+        {
+          "nodeId": "card-mnfftn6k-1",
+          "value": "this is the firstthe second and the third",
+          "html": "this is the first<div>the second </div><div>and the third</div>",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T02:42:37.362Z",
+          "children": [
+            {
+              "nodeId": "card-mnfftyn8-2",
+              "value": "this",
+              "html": "this",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:39:48.644Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 4,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnfvrfik-1",
+              "value": "the first",
+              "html": "the first",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T10:05:44.396Z",
+              "children": [],
+              "anchorStart": 8,
+              "anchorEnd": 17,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnfg6pab-1",
+              "value": "first",
+              "html": "first",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:49:43.043Z",
+              "children": [],
+              "anchorStart": 12,
+              "anchorEnd": 17,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnffu3sp-3",
+              "value": "second",
+              "html": "second",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:39:55.321Z",
+              "children": [],
+              "anchorStart": 21,
+              "anchorEnd": 27,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mnffu72a-4",
+              "value": "third",
+              "html": "third",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T02:39:59.554Z",
+              "children": [],
+              "anchorStart": 36,
+              "anchorEnd": 41,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "75.296|78.134": [
+        {
+          "nodeId": "card-mnfw59qb-1",
+          "value": "within a line lives a line",
+          "html": "within a line lives a line",
+          "commentHtml": "",
+          "createdAt": "2026-04-01T12:31:11.148Z",
+          "children": [
+            {
+              "nodeId": "card-mng05gt4-1",
+              "value": "",
+              "html": "",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T12:08:37.720Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 0,
+              "isStarter": true
+            },
+            {
+              "nodeId": "card-mng0db45-7",
+              "value": "within a line lives a line",
+              "html": "within a line lives a line",
+              "commentHtml": "",
+              "createdAt": "2026-04-01T12:14:43.589Z",
+              "children": [
+                {
+                  "nodeId": "card-mng0clv7-5",
+                  "value": "within a line lives",
+                  "html": "within a line lives",
+                  "commentHtml": "",
+                  "createdAt": "2026-04-01T12:14:10.867Z",
+                  "children": [
+                    {
+                      "nodeId": "card-mng0a85n-3",
+                      "value": "within a line",
+                      "html": "within a line",
+                      "commentHtml": "",
+                      "createdAt": "2026-04-01T12:12:19.787Z",
+                      "children": [
+                        {
+                          "nodeId": "card-mng0aytf-4",
+                          "value": "a line",
+                          "html": "a line<br>",
+                          "commentHtml": "",
+                          "createdAt": "2026-04-01T12:13:19.680Z",
+                          "children": [
+                            {
+                              "nodeId": "card-mng0cv34-6",
+                              "value": "line",
+                              "html": "line",
+                              "commentHtml": "",
+                              "createdAt": "2026-04-01T12:14:22.816Z",
+                              "children": [
+                                {
+                                  "nodeId": "card-mng0eddy-8",
+                                  "value": "l",
+                                  "html": "l",
+                                  "commentHtml": "",
+                                  "createdAt": "2026-04-01T12:15:33.190Z",
+                                  "children": [],
+                                  "anchorStart": 0,
+                                  "anchorEnd": 1,
+                                  "isStarter": false
+                                },
+                                {
+                                  "nodeId": "card-mng0egmw-9",
+                                  "value": "e",
+                                  "html": "e",
+                                  "commentHtml": "",
+                                  "createdAt": "2026-04-01T12:15:37.400Z",
+                                  "children": [],
+                                  "anchorStart": 3,
+                                  "anchorEnd": 4,
+                                  "isStarter": false
+                                }
+                              ],
+                              "anchorStart": 2,
+                              "anchorEnd": 6,
+                              "isStarter": false
+                            }
+                          ],
+                          "anchorStart": 7,
+                          "anchorEnd": 13,
+                          "isStarter": false
+                        }
+                      ],
+                      "anchorStart": 0,
+                      "anchorEnd": 13,
+                      "isStarter": false
+                    }
+                  ],
+                  "anchorStart": 0,
+                  "anchorEnd": 19,
+                  "isStarter": false
+                },
+                {
+                  "nodeId": "card-mnfw6e33-3",
+                  "value": "within a line lives a lineso strangely.. it works",
+                  "html": "within a line lives a line<br>so strangely.. it works",
+                  "commentHtml": "",
+                  "createdAt": "2026-04-01T12:11:47.672Z",
+                  "children": [
+                    {
+                      "nodeId": "card-mnfw5wih-2",
+                      "value": "lives a line",
+                      "html": "lives a line",
+                      "commentHtml": "",
+                      "createdAt": "2026-04-01T10:16:59.609Z",
+                      "children": [],
+                      "anchorStart": 14,
+                      "anchorEnd": 26,
+                      "isStarter": false
+                    }
+                  ],
+                  "anchorStart": 0,
+                  "anchorEnd": 26,
+                  "isStarter": false
+                }
+              ],
+              "anchorStart": 0,
+              "anchorEnd": 26,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "87.667|90.919": [
+        {
+          "nodeId": "card-mni65kzm-1",
+          "value": "qianhou两清就完事了",
+          "html": "qianhou两清就完事了",
+          "commentHtml": "",
+          "createdAt": "2026-04-03T00:32:49.981Z",
+          "children": [
+            {
+              "nodeId": "card-mnirbrsc-2",
+              "value": "qianhou",
+              "html": "qianhou",
+              "commentHtml": "",
+              "createdAt": "2026-04-03T10:24:53.868Z",
+              "children": [
+                {
+                  "nodeId": "card-mnir8jnd-1",
+                  "value": "qianhou前后",
+                  "html": "qianhou前后<br>",
+                  "commentHtml": "",
+                  "createdAt": "2026-04-03T10:24:44.383Z",
+                  "children": [],
+                  "anchorStart": 0,
+                  "anchorEnd": 7,
+                  "isStarter": false
+                }
+              ],
+              "anchorStart": 0,
+              "anchorEnd": 7,
+              "isStarter": false
+            },
+            {
+              "nodeId": "card-mni66hu0-2",
+              "value": "钱货两清",
+              "html": "钱货两清",
+              "commentHtml": "",
+              "createdAt": "2026-04-03T00:35:27.027Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 9,
+              "isStarter": false
+            }
+          ],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
+        }
+      ],
+      "94.455|98.220": [
+        {
+          "nodeId": "card-mnldx81p-1",
+          "value": "而准就不用说了 - 因为手表的核心功能就是计时嘛",
+          "html": "而准就不用说了 - 因为手表的核心功能就是计时嘛",
+          "commentHtml": "",
+          "createdAt": "2026-04-05T06:33:41.898Z",
+          "children": [
+            {
+              "nodeId": "card-mnldyhmx-2",
+              "value": "核心功能",
+              "html": "核心功能",
+              "commentHtml": "",
+              "createdAt": "2026-04-05T06:33:57.705Z",
+              "children": [],
+              "anchorStart": 15,
+              "anchorEnd": 19
+            },
+            {
+              "nodeId": "card-mnldymul-3",
+              "value": "计时",
+              "html": "计时",
+              "commentHtml": "",
+              "createdAt": "2026-04-05T06:34:04.461Z",
+              "children": [],
+              "anchorStart": 21,
+              "anchorEnd": 23
+            }
+          ],
+          "anchorStart": null,
+          "anchorEnd": null,
+          "isStarter": false,
+          "commentValue": "",
+          "commentUpdatedAt": "2026-04-05T06:34:36.963Z"
+        }
+      ]
+    },
+    "audSegNoteEntries": {
+      "0.000|38.651": "<div><span style=\"font-size: 0.82rem;\">bags</span></div><div>of the</div><div>essence</div>",
+      "38.651|84.650": "of leet",
+      "84.650|577.956": "yabbies"
+    },
+    "selectedSpanIndex": 2,
+    "currentTime": 97.936087,
+    "wasPlaying": true
+  },
+  "audioId": "869-ai-mp3-mnbctpxo-48oyhg",
+  "audioUrl": "/api/audio?id=869-ai-mp3-mnbctpxo-48oyhg"
+}

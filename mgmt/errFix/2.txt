@@ -1,0 +1,37 @@
+app-runtime.js:168 [audioTest][2026-03-31T13:51:13.535Z][subseg] render Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:14.763Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:14.821Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:14.899Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:15.148Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:15.954Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:15.954Z][subseg] createChild:before-push Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:15.954Z][subseg] createChild:after-push Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:15.954Z][subseg] render Object
+app-runtime.js:4503 Uncaught ReferenceError: selectionLayer is not defined
+    at renderSubSegValueCardNode (app-runtime.js:4503:11)
+    at app-runtime.js:4299:7
+    at Array.forEach (<anonymous>)
+    at renderSubSegValuePanel (app-runtime.js:4295:12)
+    at handleFocusedSubSegCardKeyDown (app-runtime.js:4951:9)
+    at handleKeyDown (app-runtime.js:591:11)
+app-runtime.js:168 [audioTest][2026-03-31T13:51:21.065Z][subseg] render Object
+app-runtime.js:4503 Uncaught ReferenceError: selectionLayer is not defined
+    at renderSubSegValueCardNode (app-runtime.js:4503:11)
+    at app-runtime.js:4299:7
+    at Array.forEach (<anonymous>)
+    at renderSubSegValuePanel (app-runtime.js:4295:12)
+    at activateSubSegValueSelection (app-runtime.js:4008:5)
+    at handleKeyDown (app-runtime.js:757:11)
+app-runtime.js:168 [audioTest][2026-03-31T13:51:24.487Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:24.640Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:25.811Z][subseg] keydown Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:25.811Z][subseg] createChild:before-push Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:25.812Z][subseg] createChild:after-push Object
+app-runtime.js:168 [audioTest][2026-03-31T13:51:25.812Z][subseg] render Object
+app-runtime.js:4503 Uncaught ReferenceError: selectionLayer is not defined
+    at renderSubSegValueCardNode (app-runtime.js:4503:11)
+    at app-runtime.js:4299:7
+    at Array.forEach (<anonymous>)
+    at renderSubSegValuePanel (app-runtime.js:4295:12)
+    at handleFocusedSubSegCardKeyDown (app-runtime.js:4951:9)
+    at handleKeyDown (app-runtime.js:591:11)
