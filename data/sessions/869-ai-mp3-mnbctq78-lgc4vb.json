@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnbctq78-lgc4vb",
   "owner": "rhys",
-  "savedAt": "2026-04-06T09:00:59.148Z",
-  "updatedAt": "2026-04-06T09:00:59.148Z",
-  "revision": 1354,
+  "savedAt": "2026-04-06T11:25:42.871Z",
+  "updatedAt": "2026-04-06T11:25:42.871Z",
+  "revision": 1364,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -83,9 +83,9 @@
         "createdAt": "2026-04-01T12:32:07.324Z"
       },
       {
-        "start": 94.454515,
-        "end": 98.21963,
-        "createdAt": "2026-04-05T06:32:49.378Z"
+        "start": 95.768024,
+        "end": 100.20563,
+        "createdAt": "2026-04-06T11:25:00.362Z"
       }
     ],
     "subSegValueEntries": {
@@ -729,51 +729,39 @@
           "isStarter": false
         }
       ],
-      "94.455|98.220": [
+      "95.768|100.206": [
         {
-          "nodeId": "card-mnldx81p-1",
-          "value": "而准就不用说了 - 因为手表的核心功能就是计时嘛",
-          "html": "而准就不用说了 - 因为手表的<span class=\"subseg-inline-highlight\">核心功能</span>就是计时嘛",
-          "commentHtml": "<br>",
-          "createdAt": "2026-04-06T08:57:15.752Z",
+          "nodeId": "card-mnn3soyq-3",
+          "value": "qianhou两清",
+          "html": "<span class=\"subseg-inline-highlight\">qian</span>hou两清",
+          "commentHtml": "",
+          "createdAt": "2026-04-06T11:25:17.407Z",
           "children": [
             {
-              "nodeId": "card-mnmws8ll-2",
-              "value": "核心功能",
-              "html": "<span class=\"subseg-inline-highlight\">核心</span>功能",
+              "nodeId": "card-mnn3tj01-5",
+              "value": "qian",
+              "html": "",
               "commentHtml": "",
-              "createdAt": "2026-04-06T09:00:58.671Z",
-              "children": [
-                {
-                  "nodeId": "card-mnmwsax7-3",
-                  "value": "核心",
-                  "html": "核心",
-                  "commentHtml": "",
-                  "createdAt": "2026-04-06T08:08:47.947Z",
-                  "children": [],
-                  "anchorStart": 0,
-                  "anchorEnd": 2,
-                  "isStarter": false
-                },
-                {
-                  "nodeId": "card-mnmwsf7s-4",
-                  "value": "功能",
-                  "html": "功能",
-                  "commentHtml": "",
-                  "createdAt": "2026-04-06T08:08:53.512Z",
-                  "children": [],
-                  "anchorStart": 2,
-                  "anchorEnd": 4,
-                  "isStarter": false
-                }
-              ],
-              "anchorStart": 15,
-              "anchorEnd": 19,
-              "isStarter": false
+              "createdAt": "2026-04-06T11:25:42.385Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 4,
+              "seedDisplaySuppressed": true
+            },
+            {
+              "nodeId": "card-mnn3t5yz-4",
+              "value": "qianhou",
+              "html": "",
+              "commentHtml": "",
+              "createdAt": "2026-04-06T11:25:25.499Z",
+              "children": [],
+              "anchorStart": 0,
+              "anchorEnd": 7,
+              "seedDisplaySuppressed": true
             }
           ],
-          "anchorStart": 0,
-          "anchorEnd": 0,
+          "anchorStart": null,
+          "anchorEnd": null,
           "isStarter": false
         }
       ]
@@ -784,7 +772,7 @@
       "84.650|577.956": "yabbies"
     },
     "selectedSpanIndex": 2,
-    "currentTime": 94.454515,
+    "currentTime": 95.768024,
     "wasPlaying": false
   },
   "audioId": "869-ai-mp3-mnbctpxo-48oyhg",
