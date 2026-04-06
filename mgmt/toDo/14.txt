@@ -1,1 +1,28 @@
-
+the current child-card flow needs a safer split between stored content, visible content, and seed metadata
+    problem:
+        when the child seed substring is hidden globally, the child can no longer be used to create grandchildren
+        multiline child content also disappears or fails to persist because the same editor html is being reused as both display state and canonical state
+    recommended solution:
+        keep the canonical child card content as stored html, including multiline structure
+        keep seed substring data separately from visible content
+            use anchorStart and anchorEnd as the lineage source
+            add an explicit seed metadata field only if needed for restoration
+        make the visible child editor a render-time concern only
+            do not hide content by changing the canonical getter for entry html
+            do not let the display rule affect commit or normalize paths
+    safer implementation options:
+        option 1 (recommended):
+            render the child seed text visibly, but de-emphasize it
+                this preserves immediate selection for grandchild creation
+                it avoids invisible-selection plumbing
+                it keeps multiline editing stable
+        option 2:
+            keep the child editor visually blank, but add a separate hidden selectable mirror
+                use the mirror only for selection and descendant creation
+                keep the visible editor independent from seed storage
+                this is more complex and more fragile
+    implementation constraints:
+        preserve multiline html through commit, rerender, and restore
+        stop routing child display through a global suppression branch in getSubSegEntryHtml
+        avoid trimming away meaningful line breaks when a card is saved
+        keep ancestor highlight behavior driven by focus state only

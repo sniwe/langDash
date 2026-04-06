@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnbctq78-lgc4vb",
   "owner": "rhys",
-  "savedAt": "2026-04-06T11:29:56.288Z",
-  "updatedAt": "2026-04-06T11:29:56.288Z",
-  "revision": 1366,
+  "savedAt": "2026-04-06T12:31:50.101Z",
+  "updatedAt": "2026-04-06T12:31:50.101Z",
+  "revision": 1373,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -733,31 +733,42 @@
         {
           "nodeId": "card-mnn3soyq-3",
           "value": "qianhou两清",
-          "html": "<strong>qianhou</strong>两清",
+          "html": "qianhou两清",
           "commentHtml": "",
-          "createdAt": "2026-04-06T11:25:17.407Z",
+          "createdAt": "2026-04-06T12:31:22.970Z",
           "children": [
             {
-              "nodeId": "card-mnn3t5yz-4",
-              "value": "qianhou",
-              "html": "<strong>qian</strong>hou",
+              "nodeId": "card-mnn65zkp-2",
+              "value": "qianhoublahhh",
+              "html": "qianhou<br><br>blahhh",
               "commentHtml": "",
-              "createdAt": "2026-04-06T11:25:25.499Z",
+              "createdAt": "2026-04-06T12:31:49.462Z",
               "children": [
                 {
-                  "nodeId": "card-mnn3yq38-1",
-                  "value": "qian",
-                  "html": "qian",
+                  "nodeId": "card-mnn62yra-1",
+                  "value": "qianhouuse extra rows",
+                  "html": "qianhou<br><br>use extra rows",
                   "commentHtml": "",
-                  "createdAt": "2026-04-06T11:29:44.852Z",
-                  "children": [],
+                  "createdAt": "2026-04-06T12:29:13.216Z",
+                  "children": [
+                    {
+                      "nodeId": "card-mnn3t5yz-4",
+                      "value": "qianhouwe just use extra rows...",
+                      "html": "qianhou<br><br>we just use extra rows...",
+                      "commentHtml": "",
+                      "createdAt": "2026-04-06T12:28:53.991Z",
+                      "children": [],
+                      "anchorStart": 0,
+                      "anchorEnd": 7,
+                      "isStarter": false
+                    }
+                  ],
                   "anchorStart": 0,
-                  "anchorEnd": 4
+                  "anchorEnd": 7
                 }
               ],
               "anchorStart": 0,
-              "anchorEnd": 7,
-              "isStarter": false
+              "anchorEnd": 7
             }
           ],
           "anchorStart": 0,
