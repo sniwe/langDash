@@ -1,0 +1,5 @@
+
+update input card height
+    desired height is max-content of the card's rich text input
+    the goal is to remove dead white space currently under rich input on each card
+    let the card background have a slight grey tint to distinguish it from the rich input background

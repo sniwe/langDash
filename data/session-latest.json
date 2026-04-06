@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnbctq78-lgc4vb",
   "owner": "rhys",
-  "savedAt": "2026-04-05T06:34:37.241Z",
-  "updatedAt": "2026-04-05T06:34:37.241Z",
-  "revision": 675,
+  "savedAt": "2026-04-06T09:00:59.148Z",
+  "updatedAt": "2026-04-06T09:00:59.148Z",
+  "revision": 1354,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -733,36 +733,48 @@
         {
           "nodeId": "card-mnldx81p-1",
           "value": "而准就不用说了 - 因为手表的核心功能就是计时嘛",
-          "html": "而准就不用说了 - 因为手表的核心功能就是计时嘛",
-          "commentHtml": "",
-          "createdAt": "2026-04-05T06:33:41.898Z",
+          "html": "而准就不用说了 - 因为手表的<span class=\"subseg-inline-highlight\">核心功能</span>就是计时嘛",
+          "commentHtml": "<br>",
+          "createdAt": "2026-04-06T08:57:15.752Z",
           "children": [
             {
-              "nodeId": "card-mnldyhmx-2",
+              "nodeId": "card-mnmws8ll-2",
               "value": "核心功能",
-              "html": "核心功能",
+              "html": "<span class=\"subseg-inline-highlight\">核心</span>功能",
               "commentHtml": "",
-              "createdAt": "2026-04-05T06:33:57.705Z",
-              "children": [],
+              "createdAt": "2026-04-06T09:00:58.671Z",
+              "children": [
+                {
+                  "nodeId": "card-mnmwsax7-3",
+                  "value": "核心",
+                  "html": "核心",
+                  "commentHtml": "",
+                  "createdAt": "2026-04-06T08:08:47.947Z",
+                  "children": [],
+                  "anchorStart": 0,
+                  "anchorEnd": 2,
+                  "isStarter": false
+                },
+                {
+                  "nodeId": "card-mnmwsf7s-4",
+                  "value": "功能",
+                  "html": "功能",
+                  "commentHtml": "",
+                  "createdAt": "2026-04-06T08:08:53.512Z",
+                  "children": [],
+                  "anchorStart": 2,
+                  "anchorEnd": 4,
+                  "isStarter": false
+                }
+              ],
               "anchorStart": 15,
-              "anchorEnd": 19
-            },
-            {
-              "nodeId": "card-mnldymul-3",
-              "value": "计时",
-              "html": "计时",
-              "commentHtml": "",
-              "createdAt": "2026-04-05T06:34:04.461Z",
-              "children": [],
-              "anchorStart": 21,
-              "anchorEnd": 23
+              "anchorEnd": 19,
+              "isStarter": false
             }
           ],
-          "anchorStart": null,
-          "anchorEnd": null,
-          "isStarter": false,
-          "commentValue": "",
-          "commentUpdatedAt": "2026-04-05T06:34:36.963Z"
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false
         }
       ]
     },
@@ -772,8 +784,8 @@
       "84.650|577.956": "yabbies"
     },
     "selectedSpanIndex": 2,
-    "currentTime": 97.936087,
-    "wasPlaying": true
+    "currentTime": 94.454515,
+    "wasPlaying": false
   },
   "audioId": "869-ai-mp3-mnbctpxo-48oyhg",
   "audioUrl": "/api/audio?id=869-ai-mp3-mnbctpxo-48oyhg"

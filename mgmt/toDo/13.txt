@@ -1,0 +1,5 @@
+we will modify the way child and descendant cards work and relate to their seed ancestor
+    do not display subString text from which the child was generated on the child card's rich input field on card creation
+        the generating subString is already captured in a property on the card's data- it doesnt need ot be displayed on the child card input
+            the ancestor seed swtring will continue to highlight relevant substring on descendant card input focus
+    

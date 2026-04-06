@@ -34,9 +34,11 @@ Project-scoped `${WORKSPACE_ROOT}\AGENTS.md` files must also initialize manageme
 
 `toDo` and `errFix` must always contain at least one blank `.txt` file. Use ordinal file names starting at `1.txt` and continue in sequence. If a previously created file gains content, create the next ordinal file as a new blank `.txt` so a blank sentinel is always present.
 
+`toDo` file contents may be interpreted as hierarchically nested blocks separated by blank lines. Use tab indentation to subordinate child points under their parent points. Line blocks that start from a nested indentation are continuations of the block above, not new blocks; in that case, blank-line separators are for user readability only.
+
 - `${MGMT_DIR}\toDo\done\` is the manual destination for completed `toDo` items.
 - `${MGMT_DIR}\errFix\fixed\` is the manual destination for completed `errFix` items.
-- `${MGMT_DIR}\DLs\` mirrors download files for the current day and referenced download paths, sorted newest-first by the queue maintenance worker.
+- `${MGMT_DIR}\DLs\` mirrors download files for the current day and referenced download paths, sorted newest-first by the queue maintenance worker and renamed `dl-1.ext`, `dl-2.ext`, ... in ordinal order while preserving each file's original extension.
 - `${MGMT_DIR}\logs\` stores runtime console logs grouped by capture date and ordinal runtime instance.
 
 Runtime logging governance:
@@ -45,6 +47,7 @@ Runtime logging governance:
 - Capture the same runtime log stream to `${MGMT_DIR}\logs\YYMMDD\N.txt`, where `YYMMDD` is the capture date and `N` is a 1-based ordinal file for that runtime instance.
 - The active runtime log file must be created under the date subdirectory for the current capture day and must remain append-only for that instance.
 - If an instance restarts on the same day, allocate the next ordinal file in that date directory.
+- A hard refresh or `Ctrl+F5` boot is a fresh runtime instance and must start a new log target under the current date subdirectory, even if the browser reuses prior session state.
 
 Default project packaging under `${MGMT_DIR}`:
 
@@ -183,7 +186,7 @@ On user command `::init`:
   - timestamp and selected source file metadata
 - Use `${PROJMAP_DIR}\threads\resolve-init-thread.ps1` as default resolver script location.
 - Ensure project-local initialization enforces the `${MGMT_DIR}\toDo\` and `${MGMT_DIR}\errFix\` ordinal blank-file rules defined above, including the `${MGMT_DIR}\toDo\done\` and `${MGMT_DIR}\errFix\fixed\` subdir guidance.
-- Ensure project-local initialization also maintains `${MGMT_DIR}\DLs\` as the mirrored Downloads staging area, populated from files in `${USER_ROOT}\Downloads` whose created date is the current date and from any referenced download paths found anywhere under `${MGMT_DIR}\toDo\` or `${MGMT_DIR}\errFix\`.
+- Ensure project-local initialization also maintains `${MGMT_DIR}\DLs\` as the mirrored Downloads staging area, populated from files in `${USER_ROOT}\Downloads` whose created date is the current date and from any referenced download paths found anywhere under `${MGMT_DIR}\toDo\` or `${MGMT_DIR}\errFix\`, with mirrored files renamed `dl-1.ext`, `dl-2.ext`, ... in newest-first ordinal order while preserving each file's original extension.
 
 ### 5) Project Refactor Bootstrap (`::refactor`)
 
@@ -218,7 +221,7 @@ After each successful file edit, trigger non-blocking project-level background s
 - Queue maintenance behavior:
   - when the project is active in VS Code, the queue worker mirrors matching files from `${USER_ROOT}\Downloads` into `${MGMT_DIR}\DLs\`.
   - files are included if their creation date is today or if any path under `${USER_ROOT}\Downloads` is referenced anywhere inside files under `${MGMT_DIR}\toDo\` or `${MGMT_DIR}\errFix\`.
-  - mirrored items are sorted newest-first in `${MGMT_DIR}\DLs\` and refreshed idempotently.
+  - mirrored items are sorted newest-first in `${MGMT_DIR}\DLs\`, renamed `dl-1.ext`, `dl-2.ext`, ... by ordinal position while preserving each file's original extension, and refreshed idempotently.
 ## Operational Precedence
 
 When instructions overlap, apply in this order:

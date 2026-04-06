@@ -35,11 +35,13 @@
   const runtimeState = {
     installed: false,
     runtimeId: "",
+    bootId: "",
     target: null,
     targetReadyPromise: null,
     pendingEntries: [],
     flushPromise: Promise.resolve(),
     suppressed: 0,
+    enabled: true,
     originalConsole: nativeConsole,
     originalsRestored: false,
     wrappedRuntimeMethods: false
@@ -53,6 +55,34 @@
     const text = String(value == null ? "" : value);
     const limit = Number.isInteger(maxLength) ? maxLength : 240;
     return text.length > limit ? text.slice(0, limit) + "..." : text;
+  }
+
+  function isReloadNavigation() {
+    try {
+      if (global.performance && typeof global.performance.getEntriesByType === "function") {
+        const entries = global.performance.getEntriesByType("navigation");
+        if (entries && entries.length) {
+          const entry = entries[0];
+          if (entry && entry.type === "reload") {
+            return true;
+          }
+        }
+      }
+      if (global.performance && global.performance.navigation && global.performance.navigation.type === 1) {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }
+
+  function formatDateKey(date) {
+    const current = date instanceof Date ? date : new Date();
+    const year = String(current.getFullYear() % 100).padStart(2, "0");
+    const month = String(current.getMonth() + 1).padStart(2, "0");
+    const day = String(current.getDate()).padStart(2, "0");
+    return year + month + day;
   }
 
   function summarizeValue(value, depth) {
@@ -229,6 +259,9 @@
   }
 
   function emitConsole(level, args) {
+    if (!runtimeState.enabled) {
+      return;
+    }
     const method = level in nativeConsole ? level : "log";
     nativeConsole[method].apply(global.console, args);
     if (runtimeState.suppressed > 0) {
@@ -246,11 +279,19 @@
   }
 
   function enqueueEntry(entry) {
-    if (!entry || runtimeState.originalsRestored) {
+    if (!entry || runtimeState.originalsRestored || !runtimeState.enabled) {
       return;
+    }
+    const todayKey = formatDateKey(new Date());
+    if (runtimeState.target && runtimeState.target.dateKey && runtimeState.target.dateKey !== todayKey) {
+      runtimeState.target = null;
+      runtimeState.targetReadyPromise = null;
     }
     if (!runtimeState.target) {
       runtimeState.pendingEntries.push(entry);
+      void ensureRuntimeTarget().then(function () {
+        return scheduleFlush();
+      });
       return;
     }
     runtimeState.pendingEntries.push(entry);
@@ -258,7 +299,10 @@
   }
 
   function scheduleFlush() {
-    if (!runtimeState.target) {
+    if (!runtimeState.target || !runtimeState.enabled) {
+      if (!runtimeState.enabled && runtimeState.pendingEntries.length) {
+        runtimeState.pendingEntries.length = 0;
+      }
       return Promise.resolve();
     }
 
@@ -325,6 +369,13 @@
   }
 
   async function ensureRuntimeTarget() {
+    if (!runtimeState.enabled) {
+      return runtimeState.target;
+    }
+    const todayKey = formatDateKey(new Date());
+    if (runtimeState.target && runtimeState.target.dateKey && runtimeState.target.dateKey !== todayKey) {
+      runtimeState.target = null;
+    }
     if (runtimeState.target) {
       return runtimeState.target;
     }
@@ -346,7 +397,10 @@
           body: JSON.stringify({
             runtimeKind: "frontend",
             location: global.location ? global.location.href : "",
-            userAgent: global.navigator ? global.navigator.userAgent : ""
+            userAgent: global.navigator ? global.navigator.userAgent : "",
+            runtimeId: runtimeState.runtimeId,
+            bootId: runtimeState.bootId,
+            forceNewTarget: isReloadNavigation()
           }),
           keepalive: true
         });
@@ -356,6 +410,9 @@
         const payload = await response.json();
         runtimeState.runtimeId = String(payload.runtimeId || payload.target && payload.target.runtimeId || "").trim();
         runtimeState.target = payload.target || null;
+        if (runtimeState.target && runtimeState.target.dateKey && runtimeState.target.dateKey !== todayKey) {
+          runtimeState.target = null;
+        }
         if (runtimeState.runtimeId) {
           nativeConsole.info("[audioTest] runtime log target ready", summarizeValue(runtimeState.target, 2));
         }
@@ -389,7 +446,7 @@
       const startedAt = Date.now();
 
       const result = nativeFetch.apply(global, args);
-      if (!runtimeState.originalsRestored) {
+      if (!runtimeState.originalsRestored && runtimeState.enabled) {
         result.then(function (response) {
           enqueueEntry(createLogEntry({
             data: {
@@ -445,6 +502,10 @@
       const info = this.__audioTestRuntimeInfo || {};
       const xhr = this;
       const onLoadEnd = function () {
+        if (!runtimeState.enabled) {
+          xhr.removeEventListener("loadend", onLoadEnd);
+          return;
+        }
         enqueueEntry(createLogEntry({
           data: {
             source: "frontend-xhr",
@@ -479,6 +540,9 @@
 
     global.Storage.prototype.setItem = function (key, value) {
       const result = nativeStorageSetItem.apply(this, arguments);
+      if (!runtimeState.enabled) {
+        return result;
+      }
       enqueueEntry(createLogEntry({
         data: {
           source: "frontend-storage",
@@ -497,6 +561,9 @@
 
     global.Storage.prototype.removeItem = function (key) {
       const result = nativeStorageRemoveItem.apply(this, arguments);
+      if (!runtimeState.enabled) {
+        return result;
+      }
       enqueueEntry(createLogEntry({
         data: {
           source: "frontend-storage",
@@ -514,6 +581,9 @@
 
     global.Storage.prototype.clear = function () {
       const result = nativeStorageClear.apply(this, arguments);
+      if (!runtimeState.enabled) {
+        return result;
+      }
       enqueueEntry(createLogEntry({
         data: {
           source: "frontend-storage",
@@ -531,6 +601,9 @@
   function patchGlobalEvents() {
     listenerTypes.forEach(function (type) {
       nativeAddEventListener(type, function (event) {
+        if (!runtimeState.enabled) {
+          return;
+        }
         enqueueEntry(createLogEntry({
           data: {
             source: "frontend-event",
@@ -544,6 +617,9 @@
     });
 
     nativeAddEventListener("error", function (event) {
+      if (!runtimeState.enabled) {
+        return;
+      }
       enqueueEntry(createLogEntry({
         data: {
           source: "frontend-event",
@@ -561,6 +637,9 @@
     }, true);
 
     nativeAddEventListener("unhandledrejection", function (event) {
+      if (!runtimeState.enabled) {
+        return;
+      }
       enqueueEntry(createLogEntry({
         data: {
           source: "frontend-event",
@@ -598,7 +677,7 @@
           const nextWrapped = wrap(nextValue, currentPath + "." + String(key));
           const previous = target[key];
           const result = Reflect.set(target, key, nextWrapped, receiver);
-          if (previous !== nextValue) {
+          if (runtimeState.enabled && previous !== nextValue) {
             enqueueEntry(createLogEntry({
               data: {
                 source: "frontend-state",
@@ -617,6 +696,9 @@
         deleteProperty(target, key) {
           const previous = target[key];
           const result = Reflect.deleteProperty(target, key);
+          if (!runtimeState.enabled) {
+            return result;
+          }
           enqueueEntry(createLogEntry({
             data: {
               source: "frontend-state",
@@ -652,54 +734,62 @@
       const original = sessionRuntime[key].bind(sessionRuntime);
       sessionRuntime[key] = function () {
         const args = Array.prototype.slice.call(arguments);
-        enqueueEntry(createLogEntry({
-          data: {
-            source: "frontend-runtime",
-            level: "info",
-            kind: "action",
-            label: key,
-            detail: {
-              args: args.map(function (arg) {
-                return summarizeValue(arg, 2);
-              })
+        if (runtimeState.enabled) {
+          enqueueEntry(createLogEntry({
+            data: {
+              source: "frontend-runtime",
+              level: "info",
+              kind: "action",
+              label: key,
+              detail: {
+                args: args.map(function (arg) {
+                  return summarizeValue(arg, 2);
+                })
+              }
             }
-          }
-        }));
+          }));
+        }
         const result = original.apply(sessionRuntime, args);
         if (result && typeof result.then === "function") {
           return result.then(function (value) {
-            enqueueEntry(createLogEntry({
-              data: {
-                source: "frontend-runtime",
-                level: "info",
-                kind: "action",
-                label: key + ":resolved",
-                detail: summarizeValue(value, 2)
-              }
-            }));
+            if (runtimeState.enabled) {
+              enqueueEntry(createLogEntry({
+                data: {
+                  source: "frontend-runtime",
+                  level: "info",
+                  kind: "action",
+                  label: key + ":resolved",
+                  detail: summarizeValue(value, 2)
+                }
+              }));
+            }
             return value;
           }).catch(function (error) {
-            enqueueEntry(createLogEntry({
-              data: {
-                source: "frontend-runtime",
-                level: "error",
-                kind: "error",
-                label: key + ":rejected",
-                detail: summarizeValue(error, 2)
-              }
-            }));
+            if (runtimeState.enabled) {
+              enqueueEntry(createLogEntry({
+                data: {
+                  source: "frontend-runtime",
+                  level: "error",
+                  kind: "error",
+                  label: key + ":rejected",
+                  detail: summarizeValue(error, 2)
+                }
+              }));
+            }
             throw error;
           });
         }
-        enqueueEntry(createLogEntry({
-          data: {
-            source: "frontend-runtime",
-            level: "info",
-            kind: "action",
-            label: key + ":return",
-            detail: summarizeValue(result, 2)
-          }
-        }));
+        if (runtimeState.enabled) {
+          enqueueEntry(createLogEntry({
+            data: {
+              source: "frontend-runtime",
+              level: "info",
+              kind: "action",
+              label: key + ":return",
+              detail: summarizeValue(result, 2)
+            }
+          }));
+        }
         return result;
       };
     });
@@ -712,6 +802,10 @@
     }
     const { data = {} } = ctx || {};
     runtimeState.installed = true;
+    runtimeState.enabled = data.enabled !== false;
+    runtimeState.bootId = global.crypto && typeof global.crypto.randomUUID === "function"
+      ? global.crypto.randomUUID()
+      : Date.now() + "-" + Math.random().toString(16).slice(2);
     const generatedRuntimeId = global.crypto && typeof global.crypto.randomUUID === "function"
       ? global.crypto.randomUUID()
       : Date.now() + "-" + Math.random().toString(16).slice(2);
@@ -722,23 +816,28 @@
     patchStorage();
     patchGlobalEvents();
     wrapSessionRuntime(data.sessionRuntime || global.audioTestSessionRuntime || {});
-    enqueueEntry(createLogEntry({
-      data: {
-        source: "frontend-runtime",
-        level: "info",
-        kind: "action",
-        label: "runtime:install",
-        detail: {
-          location: global.location ? global.location.href : "",
-          title: global.document ? global.document.title : ""
+    if (runtimeState.enabled) {
+      enqueueEntry(createLogEntry({
+        data: {
+          source: "frontend-runtime",
+          level: "info",
+          kind: "action",
+          label: "runtime:install",
+          detail: {
+            location: global.location ? global.location.href : "",
+            title: global.document ? global.document.title : ""
+          }
         }
-      }
-    }));
-    await ensureRuntimeTarget();
+      }));
+      await ensureRuntimeTarget();
+    }
     return runtimeState;
   }
 
   function logAction(label, detail) {
+    if (!runtimeState.enabled) {
+      return;
+    }
     enqueueEntry(createLogEntry({
       data: {
         source: "frontend-runtime",
@@ -751,6 +850,9 @@
   }
 
   function logStateChange(label, previous, next) {
+    if (!runtimeState.enabled) {
+      return;
+    }
     enqueueEntry(createLogEntry({
       data: {
         source: "frontend-state",
@@ -765,6 +867,25 @@
     }));
   }
 
+  async function setEnabled(ctx) {
+    const { data = {} } = ctx || {};
+    const nextEnabled = data.enabled !== false;
+    if (runtimeState.enabled === nextEnabled) {
+      return runtimeState;
+    }
+    runtimeState.enabled = nextEnabled;
+    if (!nextEnabled) {
+      runtimeState.pendingEntries.length = 0;
+      runtimeState.flushPromise = Promise.resolve();
+      return runtimeState;
+    }
+    await ensureRuntimeTarget();
+    if (runtimeState.pendingEntries.length) {
+      await scheduleFlush();
+    }
+    return runtimeState;
+  }
+
   global.audioTestRuntimeLogger = {
     install,
     logAction,
@@ -775,6 +896,10 @@
     flush: scheduleFlush,
     enqueueEntry,
     unwrapConsole,
+    setEnabled,
+    getEnabled: function () {
+      return runtimeState.enabled;
+    },
     getRuntimeState: function () {
       return runtimeState;
     }

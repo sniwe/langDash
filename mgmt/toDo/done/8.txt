@@ -1,0 +1,4 @@
+
+adjust styling of comment bubble rich input field
+    use same color as audSeg progress bar default non-filled state but without transparency (#aecad4)
+    let font size reduce to 72% of current size

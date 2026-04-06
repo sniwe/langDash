@@ -1,0 +1,3 @@
+while focusing to child card rich text input, let the the associated subString on the parent card rich text input appear highlighted (without transferring focus back to the parent)
+    e.g.
+        the "highlight" seen on "核心功能" of C:\Users\Qub\audioTest\mgmt\DLs\dl-1.png

@@ -4,7 +4,7 @@
   "name": "audioTest",
   "summary": "Browser audio checkpoint player with authenticated session persistence and remote storage support",
   "root": "C:\\Users\\Qub\\audioTest",
-  "updated": "2026-04-04T08:49:00.0000000+08:00",
+  "updated": "2026-04-06T17:57:16.4722767+08:00",
   "nodes": [
     {
       "id": "control:ui",
@@ -13,7 +13,7 @@
       "summary": "Static application shell that loads the frontend runtime and helper scripts",
       "features": [
         {
-          "summary": "Declares the login, post-login module dashboard, INGEST workflow with phase-gated Back, Guide, and Logout controls, player, guide panes, standalone audEp loading block, title text outside the player border, and a post-progress full-width audSeg note editor sized to the standard input height without placeholder text and loads the auth storage, shared formatting helpers, session runtime, full app runtime, and compatibility bootstrap in a single startup path",
+          "summary": "Declares the login, post-login module dashboard, upper-right settings icon with state and action logging plus idle auto-logout popover toggles, login-first startup that keeps the library and player shells hidden until auth succeeds, INGEST workflow with phase-gated Back, Guide, and Logout controls, player, guide panes, standalone audEp loading block, title text outside the player border, and a post-progress full-width audSeg note editor sized to the standard input height without placeholder text and loads the auth storage, shared formatting helpers, session runtime, full app runtime, and compatibility bootstrap in a single startup path",
           "flow": ["e1", "e2", "e3", "e4", "e11"]
         }
       ],
@@ -26,10 +26,10 @@
       "id": "module:frontend-runtime",
       "type": "module",
       "name": "src/frontend/modules/app-runtime.js",
-      "summary": "Frontend orchestrator for login, audio playback, session persistence, restore flow, exact UI-state and focus resume snapshots after inactivity/logout, guide interactions, cycle-select and locked-target span labeling without restored boundary tags, focus-preserving rich editor playback refreshes, focus-preserving comment bubble playback rerenders, rich child-card creation and subsumed-child reparenting from selected fragments with one-shot Enter suppression and temporary trace logging, multiline-aware selection bubble rendering with detailed console diagnostics, lower-right comment bubble rich inputs on subSeg cards with 72 percent text sizing, native Space and Enter text entry, Ctrl+Space playback toggling, vertically reserved bubble flow that pushes lower cards down instead of overlapping them, Tab transfers between comment bubbles and their owning rich inputs, explicit Ctrl+Backspace returns to the owning rich input without clearing the bubble target, and both the subSeg panel and player section are excluded from tab targets while preserving modifier-safe rich-card navigation, Enter-to-bubble focus transfer with unwindable path history, descendant focus chain selection across ancestor bubbles, Ctrl+Shift+Backspace delete-dialog toggling with cancel focus, previous-card delete return, and tab-selectable dialog actions, and finer checkpoint line dragging with shared helpers",
+      "summary": "Frontend orchestrator for login, audio playback, session persistence, restore flow, exact UI-state and focus resume snapshots after inactivity/logout or keepalive refresh, guide interactions, cycle-select and locked-target span labeling without restored boundary tags, focus-preserving rich editor playback refreshes, conditional comment bubble playback rerenders, rich child-card creation and subsumed-child reparenting from selected fragments with one-shot Enter suppression and temporary trace logging, multiline-aware selection bubble rendering with detailed console diagnostics, upper-right module-dashboard settings popover with persisted state and action logging toggle plus idle auto-logout control and auth keepalive scheduling, lower-right comment bubble rich inputs on subSeg cards with 72 percent text sizing and bubble-sized growth constraints on the main rich editor, native Space and Enter text entry, Shift+Space playback toggling, vertically reserved bubble flow that pushes lower cards down instead of overlapping them, child-focus parent substring highlighting limited to ancestor cards while focused cards and their descendants stay bold-only unless cycle-selecting, root focus clears stale highlight state, onBlur/onFocus now force immediate highlight refreshes, ctrl+up/down navigation primes the next highlight immediately before focus moves, subSeg activation now focuses the first real card input before falling back to the starter input, Tab transfers between comment bubbles and their owning rich inputs, explicit Ctrl+Backspace returns to the owning rich input without clearing the bubble target, and both the subSeg panel and player section are excluded from tab targets while preserving modifier-safe rich-card navigation, Enter-to-bubble focus transfer with unwindable path history, descendant focus chain selection across ancestor bubbles, Ctrl+Shift+Backspace delete-dialog toggling with cancel focus, previous-card delete return, and tab-selectable dialog actions, and finer checkpoint line dragging with shared helpers",
       "features": [
         {
-            "summary": "Coordinates a post-login module dashboard with keyboard navigation, the INGEST audio workflow with phase-gated Back, Guide, and Logout controls, session save and restore, exact UI-state and focus resume snapshots after inactivity/logout, player controls, guide state, cycle-select and locked-target span labeling, boundary tag suppression limited to the selected audSeg span during cycling and after selection, focus-preserving refreshes for active rich subSeg editors during playback ticks, focus-preserving comment bubble rerenders during playback ticks, Ctrl+Enter blank-card insertion in focused rich subSeg editors, wraparound Ctrl+Up/Down navigation between rich subSeg cards with immediate focus switching, rich child creation and subsumed-child reparenting from selected fragments in focused rich subSeg editors with one-shot Enter suppression and temporary trace logging, multiline-aware selection bubble rendering for rich subSeg editors with detailed console diagnostics, modifier-safe rich-card navigation, vertically reserved comment-bubble flow that keeps the lower cards pushed down while Enter remains native and Ctrl+Space toggles playback, Tab transfers between comment bubbles and their owning rich inputs, explicit Ctrl+Backspace returns to the owning rich input without clearing the bubble target, and both the subSeg panel and player section are excluded from tab targets while preserving modifier-safe rich-card navigation, Enter-to-bubble focus transfer with unwindable path history, descendant focus chain selection across ancestor bubbles, Ctrl+Shift+Backspace delete-dialog toggling with cancel focus, previous-card delete return, and tab-selectable dialog actions, mirror wrap alignment corrected to match editor line breaking, nearest-match fallback for selection anchors and repeated one-character children, removal of visible ordinal badges from parent-child selection markers, finer checkpoint line dragging, and a post-progress full-width audSeg rich-text note editor sized to the standard input height that opens by default on Enter, keeps Space and Enter as native text entry, toggles playback only on Ctrl+Space, and lets Tab return focus to the page while the lower audSeg progress bar is nudged downward by ~10px and the project focus indicators now use blue across inputs, cards, and the player container with a softened parent focus ring when the rich input is active while still toggling from the audSeg tag click through delegated overlay interaction and keeping the audEp title text outside the player border",
+            "summary": "Coordinates a post-login module dashboard with keyboard navigation, the INGEST audio workflow with phase-gated Back, Guide, and Logout controls, session save and restore, exact UI-state and focus resume snapshots after inactivity/logout or keepalive refresh, player controls, guide state, cycle-select and locked-target span labeling, boundary tag suppression limited to the selected audSeg span during cycling and after selection, focus-preserving refreshes for active rich subSeg editors during playback ticks, conditional comment-bubble rerenders during playback ticks, Ctrl+Enter blank-card insertion in focused rich subSeg editors, wraparound Ctrl+Up/Down navigation between rich subSeg cards with immediate focus switching, rich child creation and subsumed-child reparenting from selected fragments in focused rich subSeg editors with one-shot Enter suppression and temporary trace logging, multiline-aware selection bubble rendering for rich subSeg editors with detailed console diagnostics, upper-right module-dashboard settings popover with persisted state and action logging toggle plus idle auto-logout control and auth keepalive scheduling, modifier-safe rich-card navigation, vertically reserved comment-bubble flow that keeps the lower cards pushed down while Enter remains native and Shift+Space toggles playback, child-focus parent substring highlighting limited to ancestor cards while focused cards and their descendants stay bold-only unless cycle-selecting, root focus clears stale highlight state, onBlur/onFocus now force immediate highlight refreshes, ctrl+up/down navigation primes the next highlight immediately before focus moves, subSeg activation now focuses the first real card input before falling back to the starter input, Tab transfers between comment bubbles and their owning rich inputs, explicit Ctrl+Backspace returns to the owning rich input without clearing the bubble target, and both the subSeg panel and player section are excluded from tab targets while preserving modifier-safe rich-card navigation, Enter-to-bubble focus transfer with unwindable path history, descendant focus chain selection across ancestor bubbles, Ctrl+Shift+Backspace delete-dialog toggling with cancel focus, previous-card delete return, and tab-selectable dialog actions, mirror wrap alignment corrected to match editor line breaking, nearest-match fallback for selection anchors and repeated one-character children, removal of visible ordinal badges from parent-child selection markers, finer checkpoint line dragging, and a post-progress full-width audSeg rich-text note editor sized to the standard input height that opens by default on Enter, keeps Space and Enter as native text entry, toggles playback only on Shift+Space, and lets Tab return focus to the page while the lower audSeg progress bar is nudged downward by ~10px and the project focus indicators now use blue across inputs, cards, and the player container with a softened parent focus ring when the rich input is active while still toggling from the audSeg tag click through delegated overlay interaction and keeping the audEp title text outside the player border",
           "flow": ["e2", "e3"]
         }
       ],
@@ -87,6 +87,22 @@
       "children": []
     },
     {
+      "id": "module:runtime-logger",
+      "type": "module",
+      "name": "src/frontend/modules/runtime-logger.js",
+      "summary": "Frontend runtime logging, state proxying, and log target rollover helper",
+      "features": [
+        {
+          "summary": "Captures user actions, state changes, console output, and input detail; forwards runtime log batches to the backend; and refreshes the runtime target when the active date changes or a hard refresh starts a fresh boot so log files continue under the current day",
+          "flow": ["e4", "e14"]
+        }
+      ],
+      "edges": ["e4", "e14"],
+      "critical": true,
+      "files": ["src/frontend/modules/runtime-logger.js"],
+      "children": []
+    },
+    {
       "id": "control:frontend-bootstrap",
       "type": "control",
       "name": "src/frontend/app.js",
@@ -110,7 +126,7 @@
       "features": [
         {
           "summary": "Routes authenticated session and audio requests, enforces conflict checks, and delegates data access to focused backend modules",
-          "flow": ["e4", "e5", "e6", "e7", "e8", "e9", "e10"]
+          "flow": ["e4", "e5", "e6", "e7", "e8", "e9", "e10", "e12"]
         }
       ],
       "edges": ["e4", "e5", "e6", "e7", "e8", "e9", "e10"],
@@ -215,6 +231,22 @@
       "children": []
     },
     {
+      "id": "module:runtime-log-store",
+      "type": "module",
+      "name": "src/backend/runtime-log-store.js",
+      "summary": "Runtime log target allocation, rollover, and tee helpers",
+      "features": [
+        {
+          "summary": "Allocates per-runtime log files under mgmt/logs/YYMMDD/N.txt, rebinds cached targets when the local date changes, serializes log entries, and tees server console output into the active runtime log file",
+          "flow": ["e12", "e13"]
+        }
+      ],
+      "edges": ["e12", "e13"],
+      "critical": false,
+      "files": ["src/backend/runtime-log-store.js"],
+      "children": []
+    },
+    {
       "id": "io:file-url",
       "type": "io",
       "name": "URL.createObjectURL",
@@ -274,6 +306,13 @@
       "note": "UI loads compatibility bootstrap shim after the runtime"
     },
     {
+      "id": "e14",
+      "kind": "control",
+      "from": "control:frontend-bootstrap",
+      "to": "module:runtime-logger",
+      "note": "Bootstrap loads runtime logging module before the main app runtime"
+    },
+    {
       "id": "e5",
       "kind": "context",
       "from": "module:session-backend",
@@ -321,6 +360,20 @@
       "from": "module:session-backend",
       "to": "io:session-file",
       "note": "Latest session pointer and persisted session files"
+    },
+    {
+      "id": "e12",
+      "kind": "context",
+      "from": "module:session-backend",
+      "to": "module:runtime-log-store",
+      "note": "Backend runtime log file allocation and tee helpers, including force-new-target reload boots"
+    },
+    {
+      "id": "e13",
+      "kind": "context",
+      "from": "module:runtime-log-store",
+      "to": "module:backend-config",
+      "note": "Runtime log store consumes backend log path configuration"
     }
   ],
   "critical": true,

@@ -138,13 +138,19 @@ function createRuntimeLogStore(ctx) {
 
   async function allocateRuntimeTarget(ctx2) {
     const { data = {} } = ctx2 || {};
-    const runtimeId = String(data.runtimeId || crypto.randomUUID()).trim();
+    const baseRuntimeId = String(data.runtimeId || crypto.randomUUID()).trim();
+    const forceNewTarget = data.forceNewTarget === true;
+    const bootId = String(data.bootId || "").trim();
     const label = String(data.label || "runtime").trim() || "runtime";
     const date = data.date instanceof Date ? data.date : new Date();
     const dateKey = formatDateKey(date);
+    const runtimeId = forceNewTarget
+      ? baseRuntimeId + ":" + (bootId || crypto.randomUUID())
+      : baseRuntimeId;
+    const existing = state.targets.get(runtimeId);
 
-    if (state.targets.has(runtimeId)) {
-      return state.targets.get(runtimeId);
+    if (existing && existing.dateKey === dateKey) {
+      return existing;
     }
 
     const nextOrdinal = await ensureDateState(dateKey);
@@ -155,6 +161,7 @@ function createRuntimeLogStore(ctx) {
 
     const target = {
       runtimeId,
+      baseRuntimeId,
       label,
       dateKey,
       ordinal: nextOrdinal,
@@ -165,6 +172,32 @@ function createRuntimeLogStore(ctx) {
 
     state.targets.set(runtimeId, target);
     return target;
+  }
+
+  async function resolveRuntimeTarget(ctx2) {
+    const { data = {} } = ctx2 || {};
+    const runtimeId = String(data.runtimeId || "").trim();
+    if (!runtimeId) {
+      return null;
+    }
+
+    const currentDate = data.date instanceof Date ? data.date : new Date();
+    const currentDateKey = formatDateKey(currentDate);
+    const existing = state.targets.get(runtimeId);
+    if (existing && existing.dateKey === currentDateKey) {
+      return existing;
+    }
+
+    return allocateRuntimeTarget({
+      data: {
+        runtimeId: runtimeId,
+        label: existing && existing.label ? existing.label : String(data.label || "runtime").trim() || "runtime",
+        date: currentDate,
+        forceNewTarget: data.forceNewTarget === true,
+        bootId: String(data.bootId || "").trim()
+      },
+      deps: {}
+    });
   }
 
   function enqueueWrite(filePath, task) {
@@ -178,7 +211,13 @@ function createRuntimeLogStore(ctx) {
     const { data = {} } = ctx2 || {};
     const runtimeId = String(data.runtimeId || "").trim();
     const entries = Array.isArray(data.entries) ? data.entries : [];
-    const target = state.targets.get(runtimeId);
+    const target = await resolveRuntimeTarget({
+      data: {
+        runtimeId: runtimeId,
+        date: data.date instanceof Date ? data.date : new Date()
+      },
+      deps: {}
+    });
     if (!target || !entries.length) {
       return target || null;
     }
@@ -199,7 +238,13 @@ function createRuntimeLogStore(ctx) {
   async function appendEntry(ctx2) {
     const { data = {} } = ctx2 || {};
     const runtimeId = String(data.runtimeId || "").trim();
-    const target = state.targets.get(runtimeId);
+    const target = await resolveRuntimeTarget({
+      data: {
+        runtimeId: runtimeId,
+        date: data.entry && data.entry.ts instanceof Date ? data.entry.ts : new Date()
+      },
+      deps: {}
+    });
     if (!target) {
       return null;
     }
@@ -262,6 +307,7 @@ function createRuntimeLogStore(ctx) {
     allocateRuntimeTarget,
     appendEntry,
     appendLines,
+    resolveRuntimeTarget,
     createConsoleTee,
     summarizeValue,
     formatDateKey,

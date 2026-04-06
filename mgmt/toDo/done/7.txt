@@ -1,0 +1,4 @@
+
+let settings-button popover have a second list item: "idle auto-logout"
+    checked = the behavior is enabled
+    unchecked = no auto-logout after 5min idle

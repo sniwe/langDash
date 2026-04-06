@@ -1,1 +1,8 @@
 figure out a workable card layout / input system
+    
+    uses of the comment bubble
+        stand-alone units
+            each markable with type flags
+            
+
+    while child bubble cycle-selected on parent, let 

@@ -1,0 +1,5 @@
+let input card have no comment bubble items created by default on initial blank or child;
+
+let input card main rich text input have same min/max width and height and growth settings as comment bubble (except min width will be 40% parent card not 20%)
+
+restore -1 on wrap around to ctrl+left/right arrow keypress to cycle select marked child substring on input card rich text input

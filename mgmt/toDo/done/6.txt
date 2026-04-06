@@ -1,0 +1,57 @@
+Remove child substring bubble overlays and replace them with inline bold markup inside the rich input.
+
+	Scope the change to the full child-substring path in `src/frontend/modules/app-runtime.js` and the bubble styling in `src/frontend/style.css`.
+
+	Inventory the current bubble-connected code before editing:
+		`renderSubSegValuePanel`
+		`renderSubSegValueCardNode`
+		`appendSubSegCommentBubble`
+		`renderSubSegCardSelectionBubbles`
+		`getSubSegCardVisibleChildren`
+		`resolveSubSegCardSelectionRange`
+		`findBestSubSegTextMatchRange`
+		`trimSubSegSelectionRange`
+		`cycleSubSegCardBubbleTarget`
+		`transferSubSegCardFocusToBubbleTarget`
+		`restoreSubSegCardFocusTransfer`
+		`syncSubSegCommentBubbleReserve`
+		`syncSubSegCommentBubbleTabStops`
+		`focusSubSegCommentBubble`
+		`getVisibleSubSegCommentBubblePathList`
+		`clearSubSegCardBubbleTargetsForKey`
+		`syncSubSegCardFocusChain`
+		`setSubSegCardBubbleTargetIndex`
+		`getSubSegCardBubbleTargetIndex`
+		`state.subSegCardBubbleTargetIndexByKey`
+		`state.subSegCardFocusTransferStackByKey`
+		`state.subSegCardLiveValueOverrides`
+		`state.subSegCardInternalChangeGuards`
+
+	Rewrite the rendering path so child substrings are represented inline:
+		Use bold tags or equivalent inline markup inside the contenteditable HTML to mark matched child fragments.
+		Keep the parent text editable and avoid any separate overlay layer, bubble element, or corner badge for child substrings.
+		Ensure the visible child marker survives rerenders and focus changes by round-tripping through `entry.html` rather than a detached overlay DOM node.
+
+	Remove the overlay-specific DOM and layout behavior:
+		Delete the selection-layer and selection-bubble rendering path.
+		Delete the corner/comment bubble element creation path for child substring highlighting.
+		Remove the reserve-sync logic that increases card height for a floating bubble.
+		Remove the CSS rules for `.subseg-value-comment-bubble`, `.subseg-value-card-corner-bubble`, `.subseg-value-selection-layer`, `.subseg-value-selection-bubble`, `.subseg-value-selection-badge`, and any bubble-only spacing that exists solely for the overlay.
+
+	Rewrite child navigation behavior around inline highlights:
+		Replace bubble-target cycling with cursor/selection navigation over inline bold fragments.
+		Keep Enter child-creation behavior working from the selected inline fragment.
+		Update Tab and Ctrl+Backspace flows so they no longer depend on a separate bubble target index or focus transfer stack.
+		Keep delete dialog and card focus movement intact if they are still needed for non-bubble card editing.
+
+	Update the data/model helpers so child substring state is stored as inline HTML:
+		Review how `createChildCardFromSelection` stores `selectedHtml`.
+		Confirm `getSubSegEntryHtml`, `setSubSegEditorHtml`, and the commit/update path preserve bold markup and do not strip it back to plain text.
+		Adjust any normalization or display helpers that currently assume bubble-driven selection state.
+		Verify save/load snapshots still serialize the child markup correctly.
+
+	Verify the migration on a representative card:
+		Parent cards should render compactly with no overlay overlap.
+		Child fragments should appear bold inside the editor text.
+		Keyboard selection and child creation should still work after the overlay removal.
+		Tab and focus movement should remain predictable without bubble-specific state.

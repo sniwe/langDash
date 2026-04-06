@@ -22,14 +22,39 @@
       <p id="login-status" class="login-status"></p>
     </section>
 
-    <section id="library-view" class="library-view">
+    <section id="library-view" class="library-view hidden">
       <div class="library-head-row">
         <div class="library-head-left">
           <button id="modules-button" class="logout-button hidden" type="button" aria-label="Back to modules">Back</button>
           <button id="guide-button-list" class="guide-button hidden" type="button" aria-label="Start guide mode">Guide</button>
           <button id="logout-button" class="logout-button" type="button" aria-label="Log out" title="Log out">Logout</button>
         </div>
-        <button id="upload-button" class="upload-button hidden" type="button" aria-label="Upload audio" title="Upload audio">Upload</button>
+        <div class="library-head-right">
+          <div class="settings-popover-wrap">
+            <button
+              id="settings-button"
+              class="settings-button hidden"
+              type="button"
+              aria-label="Open settings"
+              aria-expanded="false"
+              aria-controls="settings-popover"
+              title="Settings"
+            >⚙</button>
+            <div id="settings-popover" class="settings-popover hidden" role="dialog" aria-label="Settings">
+              <div class="settings-popover-list" role="list">
+                <label class="settings-popover-item" role="listitem" for="settings-logging-checkbox">
+                  <input id="settings-logging-checkbox" type="checkbox" checked />
+                  <span>state &amp; action logging</span>
+                </label>
+                <label class="settings-popover-item" role="listitem" for="settings-idle-auto-logout-checkbox">
+                  <input id="settings-idle-auto-logout-checkbox" type="checkbox" checked />
+                  <span>idle auto-logout</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <button id="upload-button" class="upload-button hidden" type="button" aria-label="Upload audio" title="Upload audio">Upload</button>
+        </div>
       </div>
       <section id="module-dashboard" class="module-dashboard">
         <p class="module-dashboard-kicker">Post-login modules</p>

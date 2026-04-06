@@ -1,0 +1,7 @@
+on the module select phase of the app (the page display sdtate immediately after login) add to the upper right hand of the page a settings icon button
+    click to open settings popover list
+    inlcude one item in the list: "state & action logging"
+        let this list item have a checkbox
+            checked = on
+            unchecked = off
+        let the checked state enable / disable all logging for the app

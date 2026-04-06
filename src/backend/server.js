@@ -79,6 +79,9 @@ async function startServer(ctx) {
 
 function logServerEvent(ctx) {
   const { data = {} } = ctx || {};
+  if (data.req && !shouldLogServerEvents(data.req)) {
+    return;
+  }
   if (!runtimeLogStore || !serverLogTarget) {
     return;
   }
@@ -98,22 +101,33 @@ function logServerEvent(ctx) {
   });
 }
 
+function shouldLogServerEvents(req) {
+  const cookie = String(req && req.headers && req.headers.cookie ? req.headers.cookie : "");
+  if (!cookie) {
+    return true;
+  }
+  return !/(?:^|;\s*)audioTest\.stateActionLoggingEnabled=(?:0|false)(?:;|$)/i.test(cookie);
+}
+
 async function routeRequest(ctx) {
   const { data, deps } = ctx;
   const { req, res } = data;
   const requestUrl = parseRequestUrl({ data: { rawUrl: req.url }, deps: {} });
   const requestPath = requestUrl.pathname;
-  logServerEvent({
-    data: {
-      source: "request",
-      level: "info",
-      kind: "action",
-      label: req.method + " " + requestPath,
-      detail: {
-        url: req.url
+  if (shouldLogServerEvents(req)) {
+    logServerEvent({
+      data: {
+        req,
+        source: "request",
+        level: "info",
+        kind: "action",
+        label: req.method + " " + requestPath,
+        detail: {
+          url: req.url
+        }
       }
-    }
-  });
+    });
+  }
 
   if (req.method === "POST" && requestPath === "/api/runtime-log/start") {
     await handlePostRuntimeLogStart({ data: { req, res }, deps });
@@ -203,13 +217,16 @@ async function handlePostRuntimeLogStart(ctx) {
     data: {
       runtimeId: String(payload.runtimeId || "").trim() || undefined,
       label: String(payload.runtimeKind || "frontend").trim() || "frontend",
-      date: new Date()
+      date: new Date(),
+      forceNewTarget: payload.forceNewTarget === true,
+      bootId: String(payload.bootId || "").trim()
     },
     deps: {}
   });
 
   logServerEvent({
     data: {
+      req,
       source: "runtime-log",
       level: "info",
       kind: "action",
@@ -354,6 +371,7 @@ async function handlePostSession(ctx) {
 
   logServerEvent({
     data: {
+      req,
       source: "session",
       level: "info",
       kind: "state",
@@ -497,6 +515,7 @@ async function handlePostLogin(ctx) {
 
   logServerEvent({
     data: {
+      req,
       source: "auth",
       level: "info",
       kind: "action",
@@ -546,6 +565,7 @@ async function handleDeleteSession(ctx) {
 
   logServerEvent({
     data: {
+      req,
       source: "session",
       level: "warn",
       kind: "state",
@@ -630,6 +650,7 @@ async function handlePostAudio(ctx) {
 
   logServerEvent({
     data: {
+      req,
       source: "audio",
       level: "info",
       kind: "action",

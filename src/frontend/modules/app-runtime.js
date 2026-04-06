@@ -7,6 +7,7 @@
   const LOGIN_TTL_MS = 5 * 60 * 1000;
   const AUTH_PING_MIN_INTERVAL_MS = 30 * 1000;
   const RESUME_CONTEXT_PERSIST_DELAY_MS = 250;
+  const IDLE_AUTO_LOGOUT_STORAGE_KEY = "audioTest.idleAutoLogoutEnabled";
   const ALLOWED_USERS = ["zhaoying", "rhys"];
   const loginView = document.getElementById("login-view");
   const loginForm = document.getElementById("login-form");
@@ -70,6 +71,139 @@
   const guidePrevButton = document.getElementById("guide-prev-button");
   const guideNextButton = document.getElementById("guide-next-button");
   const guideStepCounter = document.getElementById("guide-step-counter");
+  const settingsButton = document.getElementById("settings-button");
+  const settingsPopover = document.getElementById("settings-popover");
+  const settingsLoggingCheckbox = document.getElementById("settings-logging-checkbox");
+  const settingsIdleAutoLogoutCheckbox = document.getElementById("settings-idle-auto-logout-checkbox");
+  const LOGGING_STORAGE_KEY = "audioTest.stateActionLoggingEnabled";
+
+  function readLoggingPreference() {
+    try {
+      const raw = window.localStorage.getItem(LOGGING_STORAGE_KEY);
+      if (raw === null || raw === undefined) {
+        return true;
+      }
+      return String(raw).trim() !== "0" && String(raw).trim().toLowerCase() !== "false";
+    } catch {
+      return true;
+    }
+  }
+
+  let loggingEnabled = readLoggingPreference();
+  persistLoggingPreference(loggingEnabled);
+  let idleAutoLogoutEnabled = readIdleAutoLogoutPreference();
+  persistIdleAutoLogoutPreference(idleAutoLogoutEnabled);
+
+  function readIdleAutoLogoutPreference() {
+    try {
+      const raw = window.localStorage.getItem(IDLE_AUTO_LOGOUT_STORAGE_KEY);
+      if (raw === null || raw === undefined) {
+        return true;
+      }
+      return String(raw).trim() !== "0" && String(raw).trim().toLowerCase() !== "false";
+    } catch {
+      return true;
+    }
+  }
+
+  function persistIdleAutoLogoutPreference(enabled) {
+    try {
+      window.localStorage.setItem(IDLE_AUTO_LOGOUT_STORAGE_KEY, enabled ? "1" : "0");
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  function persistLoggingPreference(enabled) {
+    try {
+      window.localStorage.setItem(LOGGING_STORAGE_KEY, enabled ? "1" : "0");
+    } catch {
+      // Ignore storage failures.
+    }
+    try {
+      document.cookie = LOGGING_STORAGE_KEY + "=" + (enabled ? "1" : "0") + "; path=/; SameSite=Lax";
+    } catch {
+      // Ignore cookie failures.
+    }
+  }
+
+  function isLoggingEnabled() {
+    if (runtimeLogger && typeof runtimeLogger.getEnabled === "function") {
+      return Boolean(runtimeLogger.getEnabled());
+    }
+    return Boolean(loggingEnabled);
+  }
+
+  function isSettingsPopoverOpen() {
+    return Boolean(settingsPopover && !settingsPopover.classList.contains("hidden"));
+  }
+
+  function syncSettingsUi() {
+    if (settingsLoggingCheckbox) {
+      settingsLoggingCheckbox.checked = Boolean(isLoggingEnabled());
+    }
+    if (settingsIdleAutoLogoutCheckbox) {
+      settingsIdleAutoLogoutCheckbox.checked = Boolean(idleAutoLogoutEnabled);
+    }
+    if (settingsButton) {
+      settingsButton.setAttribute("aria-expanded", isSettingsPopoverOpen() ? "true" : "false");
+    }
+  }
+
+  function openSettingsPopover() {
+    if (!settingsPopover || !settingsButton || settingsButton.classList.contains("hidden")) {
+      return;
+    }
+    settingsPopover.classList.remove("hidden");
+    syncSettingsUi();
+  }
+
+  function closeSettingsPopover() {
+    if (!settingsPopover) {
+      return;
+    }
+    settingsPopover.classList.add("hidden");
+    syncSettingsUi();
+  }
+
+  function toggleSettingsPopover() {
+    if (isSettingsPopoverOpen()) {
+      closeSettingsPopover();
+      return;
+    }
+    openSettingsPopover();
+  }
+
+  async function setLoggingEnabled(nextEnabled) {
+    const enabled = Boolean(nextEnabled);
+    loggingEnabled = enabled;
+    persistLoggingPreference(enabled);
+    if (runtimeLogger && typeof runtimeLogger.setEnabled === "function") {
+      await runtimeLogger.setEnabled({ data: { enabled }, deps: {} });
+    }
+    syncSettingsUi();
+  }
+
+  async function setIdleAutoLogoutEnabled(nextEnabled) {
+    const enabled = Boolean(nextEnabled);
+    const previousEnabled = Boolean(idleAutoLogoutEnabled);
+    idleAutoLogoutEnabled = enabled;
+    state.authIdleLogoutEnabled = enabled;
+    persistIdleAutoLogoutPreference(enabled);
+    logRuntimeAction("settings:idle-auto-logout-toggle", {
+      enabled,
+      previousEnabled,
+      authUser: state.authUser,
+      workspacePhase: state.workspacePhase
+    });
+    logRuntimeState("settings.idleAutoLogoutEnabled", previousEnabled, enabled);
+    if (state.authUser && state.authToken) {
+      state.lastActivityAt = Date.now();
+      persistCurrentLoginActivity();
+      scheduleAuthActivityTimers();
+    }
+    syncSettingsUi();
+  }
 
   if (selectedSpanOverlay) {
     selectedSpanOverlay.addEventListener("click", handleSelectedSpanOverlayInteraction);
@@ -142,6 +276,7 @@
     authUser: null,
     authToken: null,
     authIdleTtlMs: LOGIN_TTL_MS,
+    authIdleLogoutEnabled: idleAutoLogoutEnabled,
     activeSessionId: null,
     activeRevision: 0,
     saveQueue: Promise.resolve(),
@@ -161,6 +296,7 @@
     guideFeatureBadgeVisible: false,
     guideFeatureSpotlightTimerId: null,
     authInactivityTimerId: null,
+    authKeepAliveTimerId: null,
     lastActivityAt: 0,
     lastAuthPingAt: 0,
     resumeContextPersistTimerId: null,
@@ -185,11 +321,11 @@
   const sessionRuntime = window.audioTestSessionRuntime || {};
 
   if (runtimeLogger && typeof runtimeLogger.install === "function") {
-    runtimeLogger.install({ data: { state, sessionRuntime }, deps: {} });
+    runtimeLogger.install({ data: { state, sessionRuntime, enabled: loggingEnabled }, deps: {} });
   }
 
   function debugLog(label, detail) {
-    if (!DEBUG_AUDIO) {
+    if (!DEBUG_AUDIO || !isLoggingEnabled()) {
       return;
     }
     const stamp = new Date().toISOString();
@@ -197,6 +333,9 @@
   }
 
   function traceSubSegLog(label, detail) {
+    if (!isLoggingEnabled()) {
+      return;
+    }
     const stamp = new Date().toISOString();
     console.log("[audioTest][" + stamp + "][subseg] " + label + " " + formatDebugDetail(detail), detail || {});
   }
@@ -318,6 +457,23 @@
       moveGuideStep({ data: { delta: 1 }, deps: {} });
     });
   }
+  if (settingsButton) {
+    settingsButton.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleSettingsPopover();
+    });
+  }
+  if (settingsLoggingCheckbox) {
+    settingsLoggingCheckbox.addEventListener("change", function (event) {
+      void setLoggingEnabled(Boolean(event.target && event.target.checked));
+    });
+  }
+  if (settingsIdleAutoLogoutCheckbox) {
+    settingsIdleAutoLogoutCheckbox.addEventListener("change", function (event) {
+      void setIdleAutoLogoutEnabled(Boolean(event.target && event.target.checked));
+    });
+  }
   if (guideOverlay) {
     guideOverlay.addEventListener("click", handleGuideOverlayClick);
   }
@@ -357,6 +513,8 @@
     window.addEventListener(eventName, handleAuthActivity, { capture: true });
   });
 
+  syncSettingsUi();
+
   initialize();
 
   async function initialize() {
@@ -369,9 +527,11 @@
       state.authUser = restored.username;
       state.authToken = restored.token;
       state.lastActivityAt = Number(restored.lastActivityAt || Date.now());
-      state.authIdleTtlMs = Number.isFinite(Number(restored.ttlMs)) ? Number(restored.ttlMs) : LOGIN_TTL_MS;
+      state.authIdleTtlMs = LOGIN_TTL_MS;
+      state.authIdleLogoutEnabled = idleAutoLogoutEnabled;
       state.lastAuthPingAt = 0;
-      scheduleInactivityLogout();
+      persistIdleAutoLogoutPreference(idleAutoLogoutEnabled);
+      scheduleAuthActivityTimers();
       renderGuideFeatureBadge();
       setLoginStatus("Welcome back, " + restored.username + ".");
       showLibraryView();
@@ -427,14 +587,15 @@
         throw new Error("invalid_login_response");
       }
 
-      const ttl = Number.isFinite(Number(payload.ttlMs)) ? Number(payload.ttlMs) : LOGIN_TTL_MS;
       const loggedInAt = Number.isFinite(Number(payload.loggedInAt)) ? Number(payload.loggedInAt) : Date.now();
-      state.authIdleTtlMs = ttl;
+      state.authIdleTtlMs = LOGIN_TTL_MS;
+      state.authIdleLogoutEnabled = readIdleAutoLogoutPreference();
+      idleAutoLogoutEnabled = state.authIdleLogoutEnabled;
       persistLogin({
         username: payload.username,
         token: payload.token,
         loggedInAt,
-        ttlMs: ttl,
+        ttlMs: state.authIdleLogoutEnabled ? LOGIN_TTL_MS : 0,
         lastActivityAt: Date.now()
       });
 
@@ -442,7 +603,7 @@
       state.authToken = payload.token;
       state.lastActivityAt = Date.now();
       state.lastAuthPingAt = 0;
-      scheduleInactivityLogout();
+      scheduleAuthActivityTimers();
       renderGuideFeatureBadge();
       loginPassword.value = "";
       setLoginStatus("Signed in as " + payload.username + ".");
@@ -514,37 +675,19 @@
     if (event.defaultPrevented) {
       return;
     }
+    if (isSettingsPopoverOpen() && (event.key === "Escape" || event.code === "Escape")) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeSettingsPopover();
+      return;
+    }
     const keyCode = String(event.code || "");
     const keyValue = String(event.key || "");
     if (keyCode === "Tab" || keyValue === "Tab") {
-      const active = document.activeElement;
-      const activeIsCommentBubble = Boolean(
-        active &&
-        active.classList &&
-        active.classList.contains("subseg-value-comment-bubble")
-      );
-      const activeIsTopSubSegInput = Boolean(active && active === subSegValueInput);
-      const activeIsSubSegCardInput = Boolean(
-        active &&
-        active.classList &&
-        active.classList.contains("subseg-value-card-input")
-      );
-      let shouldTrapTab = true;
-      if (activeIsCommentBubble) {
-        shouldTrapTab = false;
-      } else if (activeIsTopSubSegInput) {
-        const activeKey = String(state.activeSubSegValueKey || "");
-        const bubbleStateKey = getSubSegCardBubbleTargetStateKey(activeKey, "");
-        const bubbleTargetIndex = Number(state.subSegCardBubbleTargetIndexByKey[bubbleStateKey]);
-        shouldTrapTab = !(Number.isFinite(bubbleTargetIndex) && bubbleTargetIndex >= 0);
-      } else if (activeIsSubSegCardInput) {
-        const activeKey = String(active.dataset && active.dataset.subSegValueKey ? active.dataset.subSegValueKey : "");
-        const activePathKey = String(active.dataset && active.dataset.subSegValuePath ? active.dataset.subSegValuePath : "");
-        const bubbleStateKey = getSubSegCardBubbleTargetStateKey(activeKey, activePathKey);
-        const bubbleTargetIndex = Number(state.subSegCardBubbleTargetIndexByKey[bubbleStateKey]);
-        shouldTrapTab = !(Number.isFinite(bubbleTargetIndex) && bubbleTargetIndex >= 0);
+      if (isTextEntryFocused) {
+        return;
       }
-      if (shouldTrapTab && trapPageTabFocus(event)) {
+      if (trapPageTabFocus(event)) {
         return;
       }
     }
@@ -719,18 +862,9 @@
 
     if (isSubSegInputFocused) {
       if (keyCode === "Tab") {
-        const activeKey = String(state.activeSubSegValueKey || "");
-        const bubbleStateKey = getSubSegCardBubbleTargetStateKey(activeKey, "");
-        const bubbleTargetIndex = Number(state.subSegCardBubbleTargetIndexByKey[bubbleStateKey]);
-        if (Number.isFinite(bubbleTargetIndex) && bubbleTargetIndex >= 0) {
-          event.preventDefault();
-          event.stopPropagation();
-          focusSubSegCommentBubble(activeKey, "");
-          return;
-        }
         return;
       }
-      if ((event.ctrlKey || event.metaKey) && isSpaceKey) {
+      if (event.shiftKey && isSpaceKey) {
         event.preventDefault();
         event.stopPropagation();
         logRuntimeAction("subseg:draft:toggle-play", {
@@ -779,7 +913,7 @@
     }
 
     if (isAudSegNoteEditorFocused) {
-      if ((event.ctrlKey || event.metaKey) && isSpaceKey) {
+      if (event.shiftKey && isSpaceKey) {
         event.preventDefault();
         event.stopPropagation();
         if (audio.paused) {
@@ -874,7 +1008,7 @@
     }
 
     if (isAudSegNoteEditorFocused) {
-      if ((event.ctrlKey || event.metaKey) && isSpaceKey) {
+      if (event.shiftKey && isSpaceKey) {
         event.preventDefault();
         event.stopPropagation();
         if (audio.paused) {
@@ -1227,6 +1361,10 @@
     if (logoutButton) {
       logoutButton.classList.remove("hidden");
     }
+    if (settingsButton) {
+      settingsButton.classList.remove("hidden");
+    }
+    closeSettingsPopover();
     if (uploadButton) {
       uploadButton.classList.add("hidden");
     }
@@ -1284,6 +1422,10 @@
     if (logoutButton) {
       logoutButton.classList.add("hidden");
     }
+    if (settingsButton) {
+      settingsButton.classList.add("hidden");
+    }
+    closeSettingsPopover();
     if (uploadButton) {
       uploadButton.classList.remove("hidden");
     }
@@ -1325,6 +1467,10 @@
     loginView.classList.add("hidden");
     libraryView.classList.add("hidden");
     playerView.classList.remove("hidden");
+    if (settingsButton) {
+      settingsButton.classList.add("hidden");
+    }
+    closeSettingsPopover();
     state.isPlayerVisible = true;
     state.workspacePhase = "player";
     syncPlayerTabTargets();
@@ -1371,6 +1517,7 @@
     }
     blurActiveEditable();
     clearCheckpointDragState();
+    closeSettingsPopover();
     loginView.classList.remove("hidden");
     libraryView.classList.add("hidden");
     playerView.classList.add("hidden");
@@ -1436,7 +1583,17 @@
 
   function handleGlobalClick(event) {
     const target = event.target;
-    if (!target || state.openMenuSessionId == null) {
+    if (!target) {
+      return;
+    }
+    if (isSettingsPopoverOpen()) {
+      const withinSettingsPopover = target.closest && target.closest("#settings-popover");
+      const withinSettingsButton = target.closest && target.closest("#settings-button");
+      if (!withinSettingsPopover && !withinSettingsButton) {
+        closeSettingsPopover();
+      }
+    }
+    if (state.openMenuSessionId == null) {
       return;
     }
     const withinMenu = target.closest && target.closest(".item-actions");
@@ -2021,7 +2178,7 @@
   }
 
   function handleAudSegNoteEditorKeyDown(event) {
-    if (!event || !(event.ctrlKey || event.metaKey)) {
+    if (!event || !event.shiftKey) {
       return;
     }
     const keyCode = String(event.code || "");
@@ -4356,26 +4513,24 @@
     resetSubSegTimelineUiState();
     const starterEntry = ensureStarterSubSegValueEntry(key);
     renderSubSegValuePanel();
+    const focusActivatedSubSegInput = function () {
+      if (focusFirstRealSubSegCardInput(key)) {
+        return true;
+      }
+      return focusStarterSubSegInput();
+    };
     requestAnimationFrame(function () {
-      if (starterEntry && subSegValueInput) {
-        try {
-          subSegValueInput.focus({ preventScroll: true });
-          if (typeof subSegValueInput.select === "function") {
-            subSegValueInput.select();
-          }
-        } catch {
-          subSegValueInput.focus();
-        }
+      if (focusActivatedSubSegInput()) {
         return;
       }
-      const firstCardInput = subSegValueList ? subSegValueList.querySelector(".subseg-value-card-input") : null;
-      if (firstCardInput) {
-        try {
-          firstCardInput.focus({ preventScroll: true });
-        } catch {
-          firstCardInput.focus();
+      requestAnimationFrame(function () {
+        if (focusActivatedSubSegInput()) {
+          return;
         }
-      }
+        setTimeout(function () {
+          focusActivatedSubSegInput();
+        }, 0);
+      });
     });
   }
 
@@ -4670,6 +4825,128 @@
     return String(probe.innerHTML || "");
   }
 
+  function textToDisplayHtml(text) {
+    return String(text || "")
+      .split("\n")
+      .map(function (part) {
+        return textToSafeHtml(part);
+      })
+      .join("<br>");
+  }
+
+  function normalizeSubSegHighlightRanges(ranges, maxLength) {
+    const source = Array.isArray(ranges) ? ranges : [];
+    const limit = Number.isFinite(maxLength) ? Math.max(0, Math.floor(maxLength)) : Number.MAX_SAFE_INTEGER;
+    const normalized = source
+      .map(function (range) {
+        const start = Number(range && range.start);
+        const end = Number(range && range.end);
+        if (!Number.isFinite(start) || !Number.isFinite(end)) {
+          return null;
+        }
+        const clippedStart = Math.max(0, Math.min(limit, Math.floor(start)));
+        const clippedEnd = Math.max(clippedStart, Math.min(limit, Math.floor(end)));
+        if (clippedEnd <= clippedStart) {
+          return null;
+        }
+        return { start: clippedStart, end: clippedEnd };
+      })
+      .filter(Boolean)
+      .sort(function (a, b) {
+        if (a.start !== b.start) {
+          return a.start - b.start;
+        }
+        return a.end - b.end;
+      });
+    const merged = [];
+    normalized.forEach(function (range) {
+      const last = merged[merged.length - 1];
+      if (last && range.start <= last.end) {
+        last.end = Math.max(last.end, range.end);
+        return;
+      }
+      merged.push({ start: range.start, end: range.end });
+    });
+    return merged;
+  }
+
+  function buildSubSegInlineHighlightHtml(text, ranges) {
+    const source = String(text || "");
+    if (!source) {
+      return "";
+    }
+    const normalized = normalizeSubSegHighlightRanges(ranges, source.length);
+    if (!normalized.length) {
+      return textToDisplayHtml(source);
+    }
+    let html = "";
+    let cursor = 0;
+    normalized.forEach(function (range) {
+      if (range.start > cursor) {
+        html += textToDisplayHtml(source.slice(cursor, range.start));
+      }
+      const selected = source.slice(range.start, range.end);
+      if (selected) {
+        html += "<span class=\"subseg-inline-highlight\">" + textToDisplayHtml(selected) + "</span>";
+      }
+      cursor = range.end;
+    });
+    if (cursor < source.length) {
+      html += textToDisplayHtml(source.slice(cursor));
+    }
+    return html;
+  }
+
+  function buildSubSegInlineBoldHtml(text, ranges) {
+    const source = String(text || "");
+    if (!source) {
+      return "";
+    }
+    const normalized = normalizeSubSegHighlightRanges(ranges, source.length);
+    if (!normalized.length) {
+      return textToDisplayHtml(source);
+    }
+    let html = "";
+    let cursor = 0;
+    normalized.forEach(function (range) {
+      if (range.start > cursor) {
+        html += textToDisplayHtml(source.slice(cursor, range.start));
+      }
+      const selected = source.slice(range.start, range.end);
+      if (selected) {
+        html += "<strong>" + textToDisplayHtml(selected) + "</strong>";
+      }
+      cursor = range.end;
+    });
+    if (cursor < source.length) {
+      html += textToDisplayHtml(source.slice(cursor));
+    }
+    return html;
+  }
+
+  function getSubSegCardHighlightRanges(visibleChildren) {
+    return Array.isArray(visibleChildren)
+      ? visibleChildren
+        .map(function (item) {
+          return item && item.resolvedSelection ? item.resolvedSelection : null;
+        })
+        .filter(Boolean)
+      : [];
+  }
+
+  function getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex) {
+    const html = String(sourceHtml != null ? sourceHtml : getSubSegEntryHtml(entry) || "");
+    const sourceText = getContentEditableDisplayText(null, html);
+    const activeIndex = Number.isFinite(Number(activeBubbleIndex)) ? Math.floor(Number(activeBubbleIndex)) : -1;
+    const activeRange = activeIndex >= 0 && Array.isArray(visibleChildren) && visibleChildren[activeIndex]
+      ? [visibleChildren[activeIndex].resolvedSelection]
+      : null;
+    if (activeRange) {
+      return buildSubSegInlineHighlightHtml(sourceText, activeRange);
+    }
+    return buildSubSegInlineBoldHtml(sourceText, getSubSegCardHighlightRanges(visibleChildren));
+  }
+
   function getSubSegEntryHtml(entry) {
     if (!entry || typeof entry !== "object") {
       return "";
@@ -4690,6 +4967,10 @@
     return "";
   }
 
+  function hasSubSegEntryCommentContent(entry) {
+    return Boolean(htmlToPlainText(getSubSegEntryCommentHtml(entry)).trim());
+  }
+
   function getSubSegEntryText(entry) {
     if (!entry || typeof entry !== "object") {
       return "";
@@ -4708,6 +4989,143 @@
     if (String(editor.innerHTML || "") !== nextHtml) {
       editor.innerHTML = nextHtml;
     }
+  }
+
+  function appendSubSegCommentBubble(card, key, pathKey, entry) {
+    if (!card || !entry || typeof entry !== "object" || !hasSubSegEntryCommentContent(entry)) {
+      return null;
+    }
+    const bubble = document.createElement("div");
+    bubble.className = "subseg-value-comment-bubble";
+    bubble.contentEditable = "true";
+    bubble.setAttribute("tabindex", "0");
+    bubble.dataset.subSegValueKey = String(key || "");
+    bubble.dataset.subSegValuePath = String(pathKey || "");
+    bubble.addEventListener("focus", handleSubSegCommentBubbleFocus);
+    bubble.addEventListener("keydown", handleSubSegCommentBubbleKeyDown);
+    bubble.addEventListener("input", handleSubSegCommentBubbleInputLive);
+    bubble.addEventListener("change", handleSubSegCommentBubbleInputChange);
+    bubble.addEventListener("blur", handleSubSegCommentBubbleInputBlur);
+    setSubSegEditorHtml(bubble, getSubSegEntryCommentHtml(entry));
+    card.appendChild(bubble);
+    return bubble;
+  }
+
+  function updateSubSegCardDisplayedHtml(key, pathKey, entry, activeBubbleIndex) {
+    if (!subSegValueList || !entry) {
+      return false;
+    }
+    const selector = ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(pathKey) + "\"]";
+    const editor = subSegValueList.querySelector(selector);
+    if (!editor) {
+      return false;
+    }
+    const stateKey = getSubSegCardRecallStateKey(key, pathKey);
+    const sourceHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)
+      ? String(state.subSegCardLiveValueOverrides[stateKey] || "")
+      : getSubSegEntryHtml(entry);
+    const displayedValue = getContentEditableDisplayText(editor, sourceHtml);
+    const visibleChildren = getSubSegCardVisibleChildren({
+      data: {
+        entry,
+        path: getSubSegValuePathArray(pathKey),
+        displayedValue,
+        sortedChildren: getSortedChildEntries(entry && entry.children ? entry.children : [])
+      },
+      deps: {}
+    });
+    const nextHtml = getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
+    if (String(editor.innerHTML || "") !== String(nextHtml || "")) {
+      editor.innerHTML = nextHtml;
+    }
+    return true;
+  }
+
+  function refreshSubSegCardEditorDisplaysForKey(key) {
+    if (!key || !subSegValueList) {
+      return false;
+    }
+    const selector = ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"]";
+    const editors = subSegValueList.querySelectorAll(selector);
+    if (!editors || editors.length <= 0) {
+      return false;
+    }
+    const values = Array.isArray(state.subSegValueEntries[key]) ? state.subSegValueEntries[key] : [];
+    const starterEntry = values.length > 0 && values[0] && values[0].isStarter ? values[0] : null;
+    let changed = false;
+    editors.forEach(function (editor) {
+      if (!editor) {
+        return;
+      }
+      const pathKey = String(editor.dataset && editor.dataset.subSegValuePath ? editor.dataset.subSegValuePath : "");
+      const card = editor.closest ? editor.closest(".subseg-value-card") : null;
+      const activeElement = document.activeElement;
+      const shouldRestoreSelection = Boolean(activeElement && activeElement === editor && editor.isContentEditable);
+      const selection = shouldRestoreSelection && window.getSelection ? window.getSelection() : null;
+      const selectionRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+      const selectionOffsets = shouldRestoreSelection && selectionRange && editor.contains(selectionRange.startContainer) && editor.contains(selectionRange.endContainer)
+        ? getContentEditableSelectionOffsets(editor, selectionRange)
+        : null;
+      let nextHtml = "";
+      let isTargetBubble = false;
+      if (!pathKey) {
+        if (starterEntry) {
+          const starterStateKey = getSubSegCardBubbleTargetStateKey(key, "");
+          const starterSourceHtml = String(state.subSegDraftHtmlByKey[key] || "") || getSubSegEntryHtml(starterEntry);
+          const starterDisplayedValue = getContentEditableDisplayText(editor, starterSourceHtml);
+          const starterVisibleChildren = getSubSegCardVisibleChildren({
+            data: {
+              entry: starterEntry,
+              path: [],
+              displayedValue: starterDisplayedValue,
+              sortedChildren: getSortedChildEntries(starterEntry.children || [])
+            },
+            deps: {}
+          });
+          const activeBubbleIndex = getSubSegCardBubbleTargetIndex(starterStateKey, starterVisibleChildren.length);
+          nextHtml = getSubSegCardDisplayedHtml(starterEntry, starterSourceHtml, starterVisibleChildren, activeBubbleIndex);
+          isTargetBubble = activeBubbleIndex >= 0;
+          if (String(starterEntry.html || "") !== String(nextHtml || "")) {
+            starterEntry.html = String(nextHtml || "");
+          }
+        }
+      } else {
+        const entry = getSubSegValueEntry(key, pathKey);
+        if (entry) {
+          const stateKey = getSubSegCardRecallStateKey(key, pathKey);
+          const sourceHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)
+            ? String(state.subSegCardLiveValueOverrides[stateKey] || "")
+            : getSubSegEntryHtml(entry);
+          const displayedValue = getContentEditableDisplayText(editor, sourceHtml);
+          const visibleChildren = getSubSegCardVisibleChildren({
+            data: {
+              entry,
+              path: getSubSegValuePathArray(pathKey),
+              displayedValue,
+              sortedChildren: getSortedChildEntries(entry && entry.children ? entry.children : [])
+            },
+            deps: {}
+          });
+          const activeBubbleIndex = getSubSegCardBubbleTargetIndex(stateKey, visibleChildren.length);
+          nextHtml = getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
+          isTargetBubble = activeBubbleIndex >= 0;
+          if (String(entry.html || "") !== String(nextHtml || "")) {
+            entry.html = String(nextHtml || "");
+          }
+        }
+      }
+      if (card) {
+        card.classList.toggle("is-target-bubble", isTargetBubble);
+      }
+      if (String(editor.innerHTML || "") !== String(nextHtml || "")) {
+        editor.innerHTML = nextHtml;
+        changed = true;
+      }
+      if (selectionOffsets) {
+        restoreContentEditableSelection(editor, selectionOffsets);
+      }
+    });
+    return changed;
   }
 
   function renderSubSegValuePanel() {
@@ -4734,11 +5152,11 @@
       return;
     }
 
+    const focusedCommentBubbleSnapshot = captureFocusedSubSegCommentBubbleSnapshot();
     if (subSegValueInput) {
       subSegValueInput.contentEditable = "true";
       subSegValueInput.setAttribute("tabindex", "0");
     }
-    const focusedCommentBubbleSnapshot = captureFocusedSubSegCommentBubbleSnapshot();
     const values = Array.isArray(state.subSegValueEntries[selectedKey]) ? state.subSegValueEntries[selectedKey] : [];
     const starterEntry = values.length > 0 && values[0] && values[0].isStarter ? values[0] : null;
     const draftHtml = String(state.subSegDraftHtmlByKey[selectedKey] || "");
@@ -4754,13 +5172,28 @@
       activeElementClass: document.activeElement && document.activeElement.classList ? String(document.activeElement.className || "") : ""
     });
     if (starterEntry && subSegValueInput) {
+      const starterSourceHtml = starterHtml;
+      const starterSourceText = getContentEditableDisplayText(subSegValueInput, starterSourceHtml);
+      const starterVisibleChildren = getSubSegCardVisibleChildren({
+        data: {
+          entry: starterEntry,
+          path: [],
+          displayedValue: starterSourceText,
+          sortedChildren: getSortedChildEntries(starterEntry.children || [])
+        },
+        deps: {}
+      });
+      const starterDisplayHtml = getSubSegCardDisplayedHtml(starterEntry, starterSourceHtml, starterVisibleChildren);
       const previousDraftKey = String(subSegValueInput.dataset.subSegDraftKey || "");
       subSegValueInput.dataset.subSegDraftKey = selectedKey;
       subSegValueInput.classList.remove("hidden");
       subSegValueInput.contentEditable = "true";
       subSegValueInput.setAttribute("tabindex", "0");
-      if (previousDraftKey !== selectedKey || String(subSegValueInput.innerHTML || "") !== starterHtml) {
-        setSubSegEditorHtml(subSegValueInput, starterHtml);
+      if (String(starterEntry.html || "") !== String(starterDisplayHtml || "")) {
+        starterEntry.html = String(starterDisplayHtml || "");
+      }
+      if (previousDraftKey !== selectedKey || String(subSegValueInput.innerHTML || "") !== starterDisplayHtml) {
+        setSubSegEditorHtml(subSegValueInput, starterDisplayHtml);
       }
     }
     subSegValueList.innerHTML = "";
@@ -4789,10 +5222,10 @@
         entryIndex < (values.length - 1)
       );
     });
-    syncPlayerTabTargets();
     syncSubSegCommentBubbleTabStops();
-    syncSubSegDraftEditorFocusState();
     restoreFocusedSubSegCommentBubbleSnapshot(focusedCommentBubbleSnapshot);
+    syncPlayerTabTargets();
+    syncSubSegDraftEditorFocusState();
     scheduleGuideStepRender({ deps: {} });
   }
 
@@ -4889,8 +5322,6 @@
     }
     const inputShell = document.createElement("div");
     inputShell.className = "subseg-value-card-input-shell";
-    const selectionLayer = document.createElement("div");
-    selectionLayer.className = "subseg-value-selection-layer";
     const editor = document.createElement("div");
     editor.className = "subseg-value-card-input";
     editor.contentEditable = "true";
@@ -4898,19 +5329,17 @@
     editor.dataset.subSegValueKey = key;
     editor.dataset.subSegValuePath = pathKey;
     const liveOverrideKey = getSubSegCardRecallStateKey(key, pathKey);
-    const displayedHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, liveOverrideKey)
+    const sourceHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, liveOverrideKey)
         ? String(state.subSegCardLiveValueOverrides[liveOverrideKey] || "")
         : getSubSegEntryHtml(entry);
-    editor.innerHTML = displayedHtml;
-    const displayedValue = getContentEditableDisplayText(editor, displayedHtml);
+    const displayedValue = getContentEditableDisplayText(null, sourceHtml);
     editor.addEventListener("input", handleSubSegCardInputLive);
+    editor.addEventListener("focus", handleSubSegCardInputFocus);
     editor.addEventListener("change", handleSubSegCardInputChange);
     editor.addEventListener("beforeinput", handleSubSegRichEditorBeforeInput);
     editor.addEventListener("blur", handleSubSegCardInputBlur);
-    inputShell.appendChild(selectionLayer);
     inputShell.appendChild(editor);
     card.appendChild(inputShell);
-    appendSubSegCommentBubble(card, key, pathKey, entry);
 
     const deleteDialogKey = getSubSegCardRecallStateKey(key, pathKey);
     if (state.subSegCardDeleteDialogKey === deleteDialogKey) {
@@ -4990,22 +5419,15 @@
       tail.className = "subseg-value-card-tail";
       card.appendChild(tail);
     }
-    subSegValueList.appendChild(card);
-    if (visibleChildren.length > 0) {
-      renderSubSegCardSelectionBubbles({
-        ui: {
-          selectionLayer,
-          input: editor,
-          inputShell
-        },
-        data: {
-          displayedValue,
-          visibleChildren,
-          activeBubbleIndex
-        },
-        deps: {}
-      });
+    const displayedHtml = getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
+    if (String(entry.html || "") !== String(displayedHtml || "")) {
+      entry.html = String(displayedHtml || "");
     }
+    if (String(editor.innerHTML || "") !== String(displayedHtml || "")) {
+      editor.innerHTML = displayedHtml;
+    }
+    appendSubSegCommentBubble(card, key, pathKey, entry);
+    subSegValueList.appendChild(card);
     visibleChildren.forEach(function (item, visibleIndex) {
       const childHasFollowingBranch = Boolean((visibleIndex < (visibleChildren.length - 1)) || hasFollowingBranch);
       renderSubSegValueCardNode(
@@ -5019,32 +5441,6 @@
         childHasFollowingBranch,
         visibleIndex === activeBubbleIndex
       );
-    });
-  }
-
-  function appendSubSegCommentBubble(card, key, pathKey, entry) {
-    if (!card) {
-      return;
-    }
-    const commentBubble = document.createElement("div");
-    commentBubble.className = "subseg-value-comment-bubble subseg-value-card-corner-bubble";
-    commentBubble.contentEditable = "true";
-    commentBubble.setAttribute("role", "textbox");
-    commentBubble.setAttribute("aria-multiline", "true");
-    commentBubble.setAttribute("spellcheck", "true");
-    commentBubble.setAttribute("tabindex", "0");
-    commentBubble.dataset.subSegValueKey = key;
-    commentBubble.dataset.subSegValuePath = pathKey;
-    commentBubble.dataset.subSegCommentBubble = "1";
-    setSubSegEditorHtml(commentBubble, getSubSegEntryCommentHtml(entry));
-    commentBubble.addEventListener("input", handleSubSegCommentBubbleInputLive);
-    commentBubble.addEventListener("change", handleSubSegCommentBubbleInputChange);
-    commentBubble.addEventListener("keydown", handleSubSegCommentBubbleKeyDown);
-    commentBubble.addEventListener("blur", handleSubSegCommentBubbleInputBlur);
-    commentBubble.addEventListener("focus", handleSubSegCommentBubbleFocus);
-    card.appendChild(commentBubble);
-    requestAnimationFrame(function () {
-      syncSubSegCommentBubbleReserve(card, commentBubble);
     });
   }
 
@@ -5312,7 +5708,14 @@
 
   function handleSubSegCardInputBlur(event) {
     const inputEl = event ? event.target : null;
-    commitSubSegCardInputValue(inputEl, { rerender: true, restoreFocus: false });
+    const key = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : "");
+    const pathKey = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : "");
+    commitSubSegCardInputValue(inputEl, { rerender: false, restoreFocus: false });
+    if (key) {
+      clearSubSegCardBubbleTargetsForKey(key);
+      setSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, pathKey), -1);
+      refreshSubSegCardEditorDisplaysForKey(key);
+    }
   }
 
   function handleSubSegCardBubbleInputLive(event) {
@@ -5374,10 +5777,10 @@
       }
       return true;
     }
-    if (isCtrl && isSpaceKey) {
+    if (event.shiftKey && isSpaceKey) {
       event.preventDefault();
       event.stopPropagation();
-      traceSubSegLog("comment-bubble:ctrl-space-toggle", {
+      traceSubSegLog("comment-bubble:shift-space-toggle", {
         key,
         pathKey,
         action: audio.paused ? "play" : "pause"
@@ -5610,6 +6013,15 @@
     requestAnimationFrame(function () {
       clearSubSegCardInternalChangeGuard(key, pathKey);
     });
+  }
+
+  function handleSubSegCardInputFocus(event) {
+    const inputEl = event ? event.target : null;
+    const key = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : "");
+    const pathKey = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : "");
+    if (key) {
+      syncSubSegCardFocusChain(key, pathKey);
+    }
   }
 
   function clearSubSegCardBubbleCommitTimerByStateKey(stateKey) {
@@ -5891,18 +6303,6 @@
       childCount: Array.isArray(entry.children) ? entry.children.length : 0
     });
 
-    if (keyCode === "Tab" || keyValue === "Tab") {
-      const stateKey = getSubSegCardBubbleTargetStateKey(key, pathKey);
-      const bubbleTargetIndex = Number(state.subSegCardBubbleTargetIndexByKey[stateKey]);
-      if (Number.isFinite(bubbleTargetIndex) && bubbleTargetIndex >= 0) {
-        event.preventDefault();
-        event.stopPropagation();
-        focusSubSegCommentBubble(key, pathKey);
-        return true;
-      }
-      return false;
-    }
-
     if (isEnter) {
       event.preventDefault();
       event.stopPropagation();
@@ -5916,9 +6316,6 @@
           });
           focusSubSegCardInput(key, insertedPathKey, false);
         }
-        return true;
-      }
-      if (transferSubSegCardFocusToBubbleTarget(key, pathKey, entry, active)) {
         return true;
       }
       const childPathKey = createChildCardFromSelection(key, pathKey, active, entry);
@@ -5952,6 +6349,17 @@
       return true;
     }
 
+    if (isSpace && isShift) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (audio.paused) {
+        audio.play().catch(function () {});
+      } else {
+        audio.pause();
+      }
+      return true;
+    }
+
     if (!isCtrl) {
       return false;
     }
@@ -5978,35 +6386,14 @@
       if (visibleChildren.length > 0) {
         event.preventDefault();
         event.stopPropagation();
-        cycleSubSegCardBubbleTarget(key, pathKey, isArrowRight ? 1 : -1, visibleChildren.length);
+        cycleSubSegInlineChildSelection(active, visibleChildren, isArrowRight ? 1 : -1);
         return true;
       }
-    }
-
-    if (isSpace && (isCtrl || isShift)) {
-      event.preventDefault();
-      event.stopPropagation();
-      if (audio.paused) {
-        audio.play().catch(function () {});
-      } else {
-        audio.pause();
-      }
-      return true;
     }
 
     if (isBackspaceKey && isCtrl) {
       event.preventDefault();
       event.stopPropagation();
-      if (restoreSubSegCardFocusTransfer(key, pathKey)) {
-        return true;
-      }
-      const bubbleStateKey = getSubSegCardBubbleTargetStateKey(key, pathKey);
-      const bubbleTargetIndex = Number(state.subSegCardBubbleTargetIndexByKey[bubbleStateKey]);
-      if (Number.isFinite(bubbleTargetIndex) && bubbleTargetIndex >= 0) {
-        setSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, pathKey), -1);
-        renderSubSegValuePanel();
-        return true;
-      }
       exitSelectedSubSegValueSelection("audSeg subSeg value selection exited");
       return true;
     }
@@ -6023,6 +6410,67 @@
 
   function getSubSegCardBubbleTargetStateKey(key, pathKey) {
     return getSubSegCardRecallStateKey(key, pathKey);
+  }
+
+  function cycleSubSegInlineChildSelection(inputEl, visibleChildren, delta) {
+    if (!inputEl || !Array.isArray(visibleChildren) || visibleChildren.length <= 0) {
+      return false;
+    }
+    const total = visibleChildren.length;
+    const stateKey = getSubSegCardBubbleTargetStateKey(
+      String(inputEl.dataset && inputEl.dataset.subSegValueKey ? inputEl.dataset.subSegValueKey : ""),
+      String(inputEl.dataset && inputEl.dataset.subSegValuePath ? inputEl.dataset.subSegValuePath : "")
+    );
+    const selection = window.getSelection ? window.getSelection() : null;
+    const currentRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    const currentText = selection ? String(selection.toString() || "") : "";
+    const currentOffsets = currentRange ? getContentEditableSelectionOffsets(inputEl, currentRange) : null;
+    let currentIndex = visibleChildren.findIndex(function (item) {
+      if (!item || !item.resolvedSelection) {
+        return false;
+      }
+      const range = item.resolvedSelection;
+      if (!currentOffsets || !currentRange || currentRange.isCollapsed) {
+        return false;
+      }
+      return range.start === currentOffsets.start &&
+        range.end === currentOffsets.end;
+    });
+    if (currentIndex < 0 && currentText) {
+      currentIndex = visibleChildren.findIndex(function (item) {
+        return item && item.childDisplayedValue === currentText.trim();
+      });
+    }
+    if (currentIndex < 0) {
+      currentIndex = getSubSegCardBubbleTargetIndex(stateKey, total);
+    }
+    const slotCount = total + 1;
+    const currentSlot = currentIndex < 0 ? 0 : currentIndex + 1;
+    const nextSlot = (currentSlot + delta + slotCount) % slotCount;
+    const nextIndex = nextSlot === 0 ? -1 : nextSlot - 1;
+    setSubSegCardBubbleTargetIndex(stateKey, nextIndex);
+    if (nextIndex < 0) {
+      try {
+        inputEl.focus({ preventScroll: true });
+      } catch {
+        inputEl.focus();
+      }
+      if (selection) {
+        selection.removeAllRanges();
+      }
+      return true;
+    }
+    const target = visibleChildren[nextIndex];
+    if (!target || !target.resolvedSelection) {
+      return false;
+    }
+    try {
+      inputEl.focus({ preventScroll: true });
+    } catch {
+      inputEl.focus();
+    }
+    restoreContentEditableSelection(inputEl, target.resolvedSelection);
+    return true;
   }
 
   function getSubSegCardBubbleTargetIndex(stateKey, visibleCount) {
@@ -6291,10 +6739,7 @@
       }
     };
     if (!(options && options.preserveBubbleTarget)) {
-      const chainUpdated = syncSubSegCardFocusChain(key, pathKey);
-      if (chainUpdated) {
-        renderSubSegValuePanel();
-      }
+      syncSubSegCardFocusChain(key, pathKey);
     }
     if (options && options.immediate) {
       focusTarget();
@@ -6322,86 +6767,84 @@
     return changed;
   }
 
+  function clearSubSegCardBubbleTargetsForSubtree(key, pathKey) {
+    if (!key || !state.subSegCardBubbleTargetIndexByKey) {
+      return false;
+    }
+    const prefix = getSubSegCardRecallStateKey(key, pathKey);
+    let changed = false;
+    Object.keys(state.subSegCardBubbleTargetIndexByKey).forEach(function (stateKey) {
+      if (stateKey === prefix || stateKey.startsWith(prefix + ".")) {
+        delete state.subSegCardBubbleTargetIndexByKey[stateKey];
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
   function getSubSegCardDisplayedHtmlForFocus(key, pathKey, entry) {
     const stateKey = getSubSegCardRecallStateKey(key, pathKey);
-    if (Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)) {
-      return String(state.subSegCardLiveValueOverrides[stateKey] || "");
-    }
-    return getSubSegEntryHtml(entry);
+    const sourceHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)
+      ? String(state.subSegCardLiveValueOverrides[stateKey] || "")
+      : getSubSegEntryHtml(entry);
+    const sourceText = getContentEditableDisplayText(null, sourceHtml);
+    const visibleChildren = getSubSegCardVisibleChildren({
+      data: {
+        entry,
+        path: getSubSegValuePathArray(pathKey),
+        displayedValue: sourceText,
+        sortedChildren: getSortedChildEntries(entry && entry.children ? entry.children : [])
+      },
+      deps: {}
+    });
+    const activeBubbleIndex = getSubSegCardBubbleTargetIndex(stateKey, visibleChildren.length);
+    return getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
   }
 
   function syncSubSegCardFocusChain(key, pathKey) {
-    if (!key) {
+    if (!key || !subSegValueList) {
       return false;
     }
     const path = getSubSegValuePathArray(pathKey);
-    let changed = clearSubSegCardBubbleTargetsForKey(key);
-    const nextStack = [];
-    if (!Array.isArray(path) || path.length <= 1) {
-      if (Array.isArray(state.subSegCardFocusTransferStackByKey[key]) && state.subSegCardFocusTransferStackByKey[key].length > 0) {
-        delete state.subSegCardFocusTransferStackByKey[key];
-        changed = true;
+    clearSubSegCardBubbleTargetsForKey(key);
+    if (path.length > 1) {
+      for (let depth = 1; depth < path.length; depth += 1) {
+        const parentPath = path.slice(0, depth);
+        const childPath = path.slice(0, depth + 1);
+        const parentPathKey = getSubSegValuePathKey(parentPath);
+        const childPathKey = getSubSegValuePathKey(childPath);
+        const parentEntry = getSubSegValueEntry(key, parentPathKey);
+        const childEntry = getSubSegValueEntry(key, childPathKey);
+        if (!parentEntry || !childEntry) {
+          break;
+        }
+        const parentStateKey = getSubSegCardBubbleTargetStateKey(key, parentPathKey);
+        const parentSelector = ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(parentPathKey) + "\"]";
+        const parentEditor = subSegValueList.querySelector(parentSelector);
+        const parentDisplayedHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, parentStateKey)
+          ? String(state.subSegCardLiveValueOverrides[parentStateKey] || "")
+          : getSubSegEntryHtml(parentEntry);
+        const parentDisplayedValue = getContentEditableDisplayText(parentEditor, parentDisplayedHtml);
+        const visibleChildren = getSubSegCardVisibleChildren({
+          data: {
+            entry: parentEntry,
+            path: parentPath,
+            displayedValue: parentDisplayedValue,
+            sortedChildren: getSortedChildEntries(parentEntry.children || [])
+          },
+          deps: {}
+        });
+        const focusedIndex = visibleChildren.findIndex(function (item) {
+          return item && String(item.childPathKey || "") === String(childPathKey || "");
+        });
+        if (focusedIndex < 0) {
+          break;
+        }
+        setSubSegCardBubbleTargetIndex(parentStateKey, focusedIndex);
       }
-      return changed;
     }
-    for (let depth = 1; depth < path.length; depth += 1) {
-      const fromPath = path.slice(0, depth);
-      const toPath = path.slice(0, depth + 1);
-      const fromPathKey = getSubSegValuePathKey(fromPath);
-      const toPathKey = getSubSegValuePathKey(toPath);
-      const fromEntry = getSubSegValueEntry(key, fromPath);
-      const toEntry = getSubSegValueEntry(key, toPath);
-      if (!fromEntry || !toEntry) {
-        break;
-      }
-      const visibleChildren = getSubSegCardVisibleChildren({
-        data: {
-          entry: fromEntry,
-          path: fromPath,
-          displayedValue: getContentEditableDisplayText(null, getSubSegCardDisplayedHtmlForFocus(key, fromPathKey, fromEntry))
-        },
-        deps: {}
-      });
-      let bubbleTargetIndex = visibleChildren.findIndex(function (item) {
-        return item && String(item.childPathKey || "") === toPathKey;
-      });
-      if (bubbleTargetIndex < 0) {
-        bubbleTargetIndex = Number.isFinite(Number(toPath[toPath.length - 1]))
-          ? Math.floor(Number(toPath[toPath.length - 1]))
-          : -1;
-      }
-      if (bubbleTargetIndex < 0) {
-        break;
-      }
-      nextStack.push({
-        fromNodeId: String(fromEntry.nodeId || ""),
-        fromPathKey,
-        toNodeId: String(toEntry.nodeId || ""),
-        toPathKey,
-        bubbleTargetIndex,
-        createdAt: new Date().toISOString()
-      });
-      setSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, fromPathKey), bubbleTargetIndex);
-      changed = true;
-    }
-    const currentStack = Array.isArray(state.subSegCardFocusTransferStackByKey[key])
-      ? state.subSegCardFocusTransferStackByKey[key]
-      : [];
-    if (currentStack.length !== nextStack.length) {
-      changed = true;
-    } else if (currentStack.some(function (record, index) {
-      const nextRecord = nextStack[index];
-      return !nextRecord ||
-        String(record.fromPathKey || "") !== String(nextRecord.fromPathKey || "") ||
-        String(record.toPathKey || "") !== String(nextRecord.toPathKey || "") ||
-        String(record.fromNodeId || "") !== String(nextRecord.fromNodeId || "") ||
-        String(record.toNodeId || "") !== String(nextRecord.toNodeId || "") ||
-        Number(record.bubbleTargetIndex) !== Number(nextRecord.bubbleTargetIndex);
-    })) {
-      changed = true;
-    }
-    state.subSegCardFocusTransferStackByKey[key] = nextStack;
-    return changed;
+    refreshSubSegCardEditorDisplaysForKey(key);
+    return true;
   }
 
   function focusTopSubSegInput() {
@@ -6439,6 +6882,8 @@
     if (!nextEntry) {
       return;
     }
+    syncSubSegCardFocusChain(key, nextPathKey);
+    renderSubSegValuePanel();
     focusSubSegCardInput(key, nextPathKey, false);
   }
 
@@ -6460,6 +6905,8 @@
     }
     const nextIndex = (currentIndex + delta + totalCards) % totalCards;
     const nextPathKey = visiblePaths[nextIndex];
+    syncSubSegCardFocusChain(key, nextPathKey);
+    renderSubSegValuePanel();
     focusSubSegCardInput(key, nextPathKey, false, { immediate: true });
   }
 
@@ -7024,6 +7471,38 @@
         scheduleSubSegCardCommitDebounced(remappedParts.key, remappedParts.pathKey);
       }
     });
+  }
+
+  function focusStarterSubSegInput() {
+    if (!subSegValueInput) {
+      return false;
+    }
+    try {
+      subSegValueInput.focus({ preventScroll: true });
+      if (typeof subSegValueInput.select === "function") {
+        subSegValueInput.select();
+      }
+    } catch {
+      subSegValueInput.focus();
+    }
+    return true;
+  }
+
+  function focusFirstRealSubSegCardInput(key) {
+    if (!subSegValueList || !key) {
+      return false;
+    }
+    const selector = ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path]:not([data-sub-seg-value-path=\"\"])";
+    const firstCardInput = subSegValueList.querySelector(selector);
+    if (!firstCardInput) {
+      return false;
+    }
+    try {
+      firstCardInput.focus({ preventScroll: true });
+    } catch {
+      firstCardInput.focus();
+    }
+    return true;
   }
 
   function splitSubSegStateKey(stateKey) {
@@ -8086,9 +8565,27 @@
       username: state.authUser,
       token: state.authToken,
       loggedInAt: Date.now(),
-      ttlMs: state.authIdleTtlMs,
+      ttlMs: state.authIdleLogoutEnabled ? state.authIdleTtlMs : 0,
       lastActivityAt: state.lastActivityAt || Date.now()
     });
+  }
+
+  function scheduleAuthKeepAlive() {
+    if (state.authKeepAliveTimerId) {
+      window.clearInterval(state.authKeepAliveTimerId);
+      state.authKeepAliveTimerId = null;
+    }
+    if (!state.authUser || !state.authToken || state.authIdleLogoutEnabled) {
+      return;
+    }
+    state.authKeepAliveTimerId = window.setInterval(function () {
+      if (!state.authUser || !state.authToken || state.authIdleLogoutEnabled) {
+        return;
+      }
+      state.lastActivityAt = Date.now();
+      persistCurrentLoginActivity();
+      maybePingAuthActivity();
+    }, AUTH_PING_MIN_INTERVAL_MS);
   }
 
   function scheduleInactivityLogout() {
@@ -8099,6 +8596,9 @@
     if (!state.authUser || !state.authToken) {
       return;
     }
+    if (!state.authIdleLogoutEnabled) {
+      return;
+    }
     if (!Number.isFinite(state.authIdleTtlMs) || state.authIdleTtlMs <= 0) {
       return;
     }
@@ -8107,6 +8607,22 @@
     state.authInactivityTimerId = window.setTimeout(function () {
       clearLoginState("Logged out due to inactivity.");
     }, remaining);
+  }
+
+  function scheduleAuthActivityTimers() {
+    if (state.authIdleLogoutEnabled) {
+      if (state.authKeepAliveTimerId) {
+        window.clearInterval(state.authKeepAliveTimerId);
+        state.authKeepAliveTimerId = null;
+      }
+      scheduleInactivityLogout();
+      return;
+    }
+    if (state.authInactivityTimerId) {
+      window.clearTimeout(state.authInactivityTimerId);
+      state.authInactivityTimerId = null;
+    }
+    scheduleAuthKeepAlive();
   }
 
   function maybePingAuthActivity() {
@@ -8134,7 +8650,7 @@
     state.lastActivityAt = Date.now();
     persistCurrentLoginActivity();
     scheduleResumeContextPersist();
-    scheduleInactivityLogout();
+    scheduleAuthActivityTimers();
     maybePingAuthActivity();
   }
 
@@ -8250,6 +8766,10 @@
     if (state.authInactivityTimerId) {
       window.clearTimeout(state.authInactivityTimerId);
       state.authInactivityTimerId = null;
+    }
+    if (state.authKeepAliveTimerId) {
+      window.clearInterval(state.authKeepAliveTimerId);
+      state.authKeepAliveTimerId = null;
     }
     try {
       window.localStorage.removeItem(LOGIN_STORAGE_KEY);
