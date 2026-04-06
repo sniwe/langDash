@@ -26,3 +26,12 @@ the current child-card flow needs a safer split between stored content, visible 
         stop routing child display through a global suppression branch in getSubSegEntryHtml
         avoid trimming away meaningful line breaks when a card is saved
         keep ancestor highlight behavior driven by focus state only
+    what actually made it work:
+        keep the child card visible instead of blanking its content
+            use a render-time de-emphasis class for newly created seed-origin children rather than suppressing the html getter
+        treat anchorStart and anchorEnd as the canonical lineage link
+            resolve child visibility and ancestor highlighting from anchors first
+            do not require the child's current value to text-match the parent seed after multiline edits
+        keep multiline persistence on the stored html path
+            commit from innerHTML
+            do not flatten the child into value-only matching when reopening or remapping
