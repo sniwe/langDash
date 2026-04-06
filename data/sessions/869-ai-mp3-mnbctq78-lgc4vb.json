@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnbctq78-lgc4vb",
   "owner": "rhys",
-  "savedAt": "2026-04-06T11:25:42.871Z",
-  "updatedAt": "2026-04-06T11:25:42.871Z",
-  "revision": 1364,
+  "savedAt": "2026-04-06T11:29:56.288Z",
+  "updatedAt": "2026-04-06T11:29:56.288Z",
+  "revision": 1366,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -733,35 +733,35 @@
         {
           "nodeId": "card-mnn3soyq-3",
           "value": "qianhou两清",
-          "html": "<span class=\"subseg-inline-highlight\">qian</span>hou两清",
+          "html": "<strong>qianhou</strong>两清",
           "commentHtml": "",
           "createdAt": "2026-04-06T11:25:17.407Z",
           "children": [
             {
-              "nodeId": "card-mnn3tj01-5",
-              "value": "qian",
-              "html": "",
-              "commentHtml": "",
-              "createdAt": "2026-04-06T11:25:42.385Z",
-              "children": [],
-              "anchorStart": 0,
-              "anchorEnd": 4,
-              "seedDisplaySuppressed": true
-            },
-            {
               "nodeId": "card-mnn3t5yz-4",
               "value": "qianhou",
-              "html": "",
+              "html": "<strong>qian</strong>hou",
               "commentHtml": "",
               "createdAt": "2026-04-06T11:25:25.499Z",
-              "children": [],
+              "children": [
+                {
+                  "nodeId": "card-mnn3yq38-1",
+                  "value": "qian",
+                  "html": "qian",
+                  "commentHtml": "",
+                  "createdAt": "2026-04-06T11:29:44.852Z",
+                  "children": [],
+                  "anchorStart": 0,
+                  "anchorEnd": 4
+                }
+              ],
               "anchorStart": 0,
               "anchorEnd": 7,
-              "seedDisplaySuppressed": true
+              "isStarter": false
             }
           ],
-          "anchorStart": null,
-          "anchorEnd": null,
+          "anchorStart": 0,
+          "anchorEnd": 0,
           "isStarter": false
         }
       ]

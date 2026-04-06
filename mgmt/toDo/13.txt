@@ -1,5 +1,22 @@
-we will modify the way child and descendant cards work and relate to their seed ancestor
-    do not display subString text from which the child was generated on the child card's rich input field on card creation
-        the generating subString is already captured in a property on the card's data- it doesnt need ot be displayed on the child card input
-            the ancestor seed swtring will continue to highlight relevant substring on descendant card input focus
-    
+best path is to preserve the seed substring in the child card's editable model, but separate what is shown from what is stored
+    option 1 (recommended):
+        keep the child card visually showing plain text for the seed substring only while the card is created
+            store the seed substring in a dedicated hidden field like seedValue or seedHtml
+            keep the current value/html fields for editing state, but treat them as the editable surface rather than the source of truth for the initial seed
+            allow selection and caret positioning on the child card to operate against the hidden seed text buffer so grandchild creation still works
+        when the child is focused, highlight the ancestor substring on the parent card as today
+        when the child itself is focused, show normal bold text on the child card and do not apply blue selection styling on that focused card
+        when the child is edited for the first time, promote its visible content from seed-only state into normal editable text
+    option 2:
+        keep the child card text visible, but render it in a neutral, low-emphasis mode until the first edit
+            this preserves grandchild selection immediately
+            it avoids a blank child editor, but it is less aligned with the request to hide the generated substring on creation
+    option 3:
+        render a separate invisible selection layer under the child input
+            the visible child card can stay blank or simplified
+            selection logic uses the hidden layer to create grandchildren
+            this is the most complex because it introduces a second editable representation and more focus/selection sync rules
+    implementation notes:
+        keep ancestor substring highlighting driven by focus state, not by child display text
+        do not remove the underlying substring data from the child node, because that data is needed for re-selection and descendant creation
+        add a first-edit transition so the child can become a normal editable card without losing its seed metadata
