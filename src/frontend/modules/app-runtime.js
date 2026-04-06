@@ -4951,6 +4951,9 @@
     if (!entry || typeof entry !== "object") {
       return "";
     }
+    if (entry.seedDisplaySuppressed && !entry.isStarter) {
+      return "";
+    }
     if (typeof entry.html === "string") {
       return entry.html;
     }
@@ -6112,6 +6115,9 @@
     entry.html = nextHtml;
     entry.value = nextValue;
     entry.createdAt = new Date().toISOString();
+    if (Object.prototype.hasOwnProperty.call(entry, "seedDisplaySuppressed") && hasNextContent) {
+      entry.seedDisplaySuppressed = false;
+    }
     if (Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)) {
       delete state.subSegCardLiveValueOverrides[stateKey];
     }
@@ -7212,7 +7218,8 @@
       createdAt,
       children: [],
       anchorStart: selectionStart,
-      anchorEnd: selectionEnd
+      anchorEnd: selectionEnd,
+      seedDisplaySuppressed: true
     };
     childNode.children = getSortedChildEntries(movedEntries.map(function (item) { return item.entry; }));
     parentEntry.children.push(childNode);
