@@ -5460,17 +5460,11 @@
     sortedChildren.forEach(function (childEntry, childIndex) {
       const childPath = path.concat(childIndex);
       const childPathKey = getSubSegValuePathKey(childPath);
-      const childDisplayedValue = String(childEntry && childEntry.value ? childEntry.value : "").trim();
-      if (!childDisplayedValue) {
-        return;
-      }
       const resolvedSelection = resolveSubSegCardSelectionRange(displayedValue, childEntry);
       if (!resolvedSelection) {
         return;
       }
-      if (String(displayedValue || "").indexOf(childDisplayedValue) < 0) {
-        return;
-      }
+      const childDisplayedValue = String(displayedValue.slice(resolvedSelection.start, resolvedSelection.end) || "").trim();
       visibleChildren.push({
         childEntry,
         childPath,
@@ -5485,25 +5479,12 @@
 
   function resolveSubSegCardSelectionRange(displayedValue, childEntry) {
     const text = String(displayedValue || "");
-    const entryValue = String(childEntry && childEntry.value != null ? childEntry.value : "").trim();
     const anchorStart = Number(childEntry && childEntry.anchorStart);
     const anchorEnd = Number(childEntry && childEntry.anchorEnd);
     if (Number.isFinite(anchorStart) && Number.isFinite(anchorEnd) && anchorEnd > anchorStart && anchorStart >= 0 && anchorEnd <= text.length) {
-      const anchoredRange = trimSubSegSelectionRange(text, { start: Math.floor(anchorStart), end: Math.floor(anchorEnd) });
-      if (anchoredRange) {
-        const anchoredText = String(text.slice(anchoredRange.start, anchoredRange.end) || "").trim();
-        if (anchoredText && anchoredText === entryValue) {
-          return anchoredRange;
-        }
-        traceSubSegLog("selection:anchor-mismatch", {
-          entryValue,
-          anchorStart,
-          anchorEnd,
-          anchoredText,
-          displayedLength: text.length
-        });
-      }
+      return trimSubSegSelectionRange(text, { start: Math.floor(anchorStart), end: Math.floor(anchorEnd) });
     }
+    const entryValue = String(childEntry && childEntry.value != null ? childEntry.value : "").trim();
     if (!entryValue) {
       return null;
     }

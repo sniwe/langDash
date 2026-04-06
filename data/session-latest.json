@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnbctq78-lgc4vb",
   "owner": "rhys",
-  "savedAt": "2026-04-06T12:31:50.101Z",
-  "updatedAt": "2026-04-06T12:31:50.101Z",
-  "revision": 1373,
+  "savedAt": "2026-04-06T12:41:30.462Z",
+  "updatedAt": "2026-04-06T12:41:30.462Z",
+  "revision": 1379,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -106,7 +106,8 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 6,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnfew15a-1",
@@ -117,7 +118,8 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 6,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnen26xk-1",
@@ -128,12 +130,14 @@
               "children": [],
               "anchorStart": 7,
               "anchorEnd": 15,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         },
         {
           "nodeId": "card-mndtx1fv-1",
@@ -144,7 +148,8 @@
           "children": [],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": true
+          "isStarter": true,
+          "isSeedOrigin": false
         },
         {
           "nodeId": "card-mndtx5oz-2",
@@ -155,7 +160,8 @@
           "children": [],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": true
+          "isStarter": true,
+          "isSeedOrigin": false
         }
       ],
       "34.886|38.366": [
@@ -175,12 +181,14 @@
               "children": [],
               "anchorStart": 13,
               "anchorEnd": 17,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "10.887|14.130": [
@@ -200,7 +208,8 @@
               "children": [],
               "anchorStart": 31,
               "anchorEnd": 36,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnfeq41e-2",
@@ -211,7 +220,8 @@
               "children": [],
               "anchorStart": 31,
               "anchorEnd": 36,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnfehh9h-1",
@@ -222,12 +232,14 @@
               "children": [],
               "anchorStart": 37,
               "anchorEnd": 41,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "16.842|19.498": [
@@ -247,12 +259,14 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 5,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "23.160|27.196": [
@@ -265,7 +279,8 @@
           "children": [],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "31.366|32.850": [
@@ -292,17 +307,20 @@
                   "children": [],
                   "anchorStart": 2,
                   "anchorEnd": 4,
-                  "isStarter": false
+                  "isStarter": false,
+                  "isSeedOrigin": false
                 }
               ],
               "anchorStart": 0,
               "anchorEnd": 4,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "50.179|52.932": [
@@ -322,7 +340,8 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 4,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnfex0sp-3",
@@ -333,12 +352,14 @@
               "children": [],
               "anchorStart": 8,
               "anchorEnd": 15,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "54.762|57.953": [
@@ -358,7 +379,8 @@
               "children": [],
               "anchorStart": 15,
               "anchorEnd": 23,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnff5kj6-3",
@@ -369,12 +391,14 @@
               "children": [],
               "anchorStart": 45,
               "anchorEnd": 63,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "61.327|63.518": [
@@ -394,7 +418,8 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 3,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnffj283-3",
@@ -405,12 +430,14 @@
               "children": [],
               "anchorStart": 13,
               "anchorEnd": 17,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "71.584|74.177": [
@@ -430,7 +457,8 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 7,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnffnmzf-3",
@@ -441,7 +469,8 @@
               "children": [],
               "anchorStart": 18,
               "anchorEnd": 19,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnffnv2w-4",
@@ -452,7 +481,8 @@
               "children": [],
               "anchorStart": 18,
               "anchorEnd": 19,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnffo8ck-6",
@@ -463,7 +493,8 @@
               "children": [],
               "anchorStart": 20,
               "anchorEnd": 23,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnffo3sv-5",
@@ -474,12 +505,14 @@
               "children": [],
               "anchorStart": 41,
               "anchorEnd": 43,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "80.273|83.892": [
@@ -499,7 +532,8 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 4,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnfvrfik-1",
@@ -510,7 +544,8 @@
               "children": [],
               "anchorStart": 8,
               "anchorEnd": 17,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnfg6pab-1",
@@ -521,7 +556,8 @@
               "children": [],
               "anchorStart": 12,
               "anchorEnd": 17,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnffu3sp-3",
@@ -532,7 +568,8 @@
               "children": [],
               "anchorStart": 21,
               "anchorEnd": 27,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mnffu72a-4",
@@ -543,12 +580,14 @@
               "children": [],
               "anchorStart": 36,
               "anchorEnd": 41,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "75.296|78.134": [
@@ -568,7 +607,8 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 0,
-              "isStarter": true
+              "isStarter": true,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mng0db45-7",
@@ -614,7 +654,8 @@
                                   "children": [],
                                   "anchorStart": 0,
                                   "anchorEnd": 1,
-                                  "isStarter": false
+                                  "isStarter": false,
+                                  "isSeedOrigin": false
                                 },
                                 {
                                   "nodeId": "card-mng0egmw-9",
@@ -625,27 +666,32 @@
                                   "children": [],
                                   "anchorStart": 3,
                                   "anchorEnd": 4,
-                                  "isStarter": false
+                                  "isStarter": false,
+                                  "isSeedOrigin": false
                                 }
                               ],
                               "anchorStart": 2,
                               "anchorEnd": 6,
-                              "isStarter": false
+                              "isStarter": false,
+                              "isSeedOrigin": false
                             }
                           ],
                           "anchorStart": 7,
                           "anchorEnd": 13,
-                          "isStarter": false
+                          "isStarter": false,
+                          "isSeedOrigin": false
                         }
                       ],
                       "anchorStart": 0,
                       "anchorEnd": 13,
-                      "isStarter": false
+                      "isStarter": false,
+                      "isSeedOrigin": false
                     }
                   ],
                   "anchorStart": 0,
                   "anchorEnd": 19,
-                  "isStarter": false
+                  "isStarter": false,
+                  "isSeedOrigin": false
                 },
                 {
                   "nodeId": "card-mnfw6e33-3",
@@ -663,22 +709,26 @@
                       "children": [],
                       "anchorStart": 14,
                       "anchorEnd": 26,
-                      "isStarter": false
+                      "isStarter": false,
+                      "isSeedOrigin": false
                     }
                   ],
                   "anchorStart": 0,
                   "anchorEnd": 26,
-                  "isStarter": false
+                  "isStarter": false,
+                  "isSeedOrigin": false
                 }
               ],
               "anchorStart": 0,
               "anchorEnd": 26,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "87.667|90.919": [
@@ -705,12 +755,14 @@
                   "children": [],
                   "anchorStart": 0,
                   "anchorEnd": 7,
-                  "isStarter": false
+                  "isStarter": false,
+                  "isSeedOrigin": false
                 }
               ],
               "anchorStart": 0,
               "anchorEnd": 7,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             },
             {
               "nodeId": "card-mni66hu0-2",
@@ -721,12 +773,14 @@
               "children": [],
               "anchorStart": 0,
               "anchorEnd": 9,
-              "isStarter": false
+              "isStarter": false,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ],
       "95.768|100.206": [
@@ -738,42 +792,21 @@
           "createdAt": "2026-04-06T12:31:22.970Z",
           "children": [
             {
-              "nodeId": "card-mnn65zkp-2",
-              "value": "qianhoublahhh",
-              "html": "qianhou<br><br>blahhh",
+              "nodeId": "card-mnn6isur-3",
+              "value": "qianhoutest extra line",
+              "html": "qianhou<br><br>test extra line",
               "commentHtml": "",
-              "createdAt": "2026-04-06T12:31:49.462Z",
-              "children": [
-                {
-                  "nodeId": "card-mnn62yra-1",
-                  "value": "qianhouuse extra rows",
-                  "html": "qianhou<br><br>use extra rows",
-                  "commentHtml": "",
-                  "createdAt": "2026-04-06T12:29:13.216Z",
-                  "children": [
-                    {
-                      "nodeId": "card-mnn3t5yz-4",
-                      "value": "qianhouwe just use extra rows...",
-                      "html": "qianhou<br><br>we just use extra rows...",
-                      "commentHtml": "",
-                      "createdAt": "2026-04-06T12:28:53.991Z",
-                      "children": [],
-                      "anchorStart": 0,
-                      "anchorEnd": 7,
-                      "isStarter": false
-                    }
-                  ],
-                  "anchorStart": 0,
-                  "anchorEnd": 7
-                }
-              ],
+              "createdAt": "2026-04-06T12:41:29.996Z",
+              "children": [],
               "anchorStart": 0,
-              "anchorEnd": 7
+              "anchorEnd": 7,
+              "isSeedOrigin": false
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
-          "isStarter": false
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ]
     },
