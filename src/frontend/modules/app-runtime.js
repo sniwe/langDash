@@ -5328,6 +5328,7 @@
     editor.setAttribute("tabindex", "0");
     editor.dataset.subSegValueKey = key;
     editor.dataset.subSegValuePath = pathKey;
+    editor.classList.toggle("is-seed-origin", Boolean(entry.isSeedOrigin));
     const liveOverrideKey = getSubSegCardRecallStateKey(key, pathKey);
     const sourceHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, liveOverrideKey)
         ? String(state.subSegCardLiveValueOverrides[liveOverrideKey] || "")
@@ -5999,6 +6000,13 @@
       ? String(state.subSegCardLiveValueOverrides[stateKey] || "")
       : getSubSegEntryHtml(getSubSegValueEntry(key, pathKey));
     const previousText = htmlToPlainText(previousHtml).trim();
+    const entry = getSubSegValueEntry(key, pathKey);
+    if (entry && entry.isSeedOrigin) {
+      entry.isSeedOrigin = false;
+      if (inputEl && inputEl.classList) {
+        inputEl.classList.remove("is-seed-origin");
+      }
+    }
     logRuntimeAction("subseg-card:input", {
       key,
       pathKey,
@@ -6112,6 +6120,9 @@
     entry.html = nextHtml;
     entry.value = nextValue;
     entry.createdAt = new Date().toISOString();
+    if (entry.isSeedOrigin) {
+      entry.isSeedOrigin = false;
+    }
     if (Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)) {
       delete state.subSegCardLiveValueOverrides[stateKey];
     }
@@ -7212,7 +7223,8 @@
       createdAt,
       children: [],
       anchorStart: selectionStart,
-      anchorEnd: selectionEnd
+      anchorEnd: selectionEnd,
+      isSeedOrigin: true
     };
     childNode.children = getSortedChildEntries(movedEntries.map(function (item) { return item.entry; }));
     parentEntry.children.push(childNode);
@@ -8070,7 +8082,8 @@
         children,
         anchorStart,
         anchorEnd,
-        isStarter
+        isStarter,
+        isSeedOrigin: Boolean(entry.isSeedOrigin)
       };
     }
     const value = String(entry || "").trim();
@@ -8086,7 +8099,8 @@
       children: [],
       anchorStart: null,
       anchorEnd: null,
-      isStarter: false
+      isStarter: false,
+      isSeedOrigin: false
     };
   }
 

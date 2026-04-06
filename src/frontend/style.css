@@ -1233,6 +1233,10 @@ h1, p { margin: 0; }
   color: #16315a;
 }
 
+.subseg-value-card-input.is-seed-origin {
+  color: #5d6980;
+}
+
 .subseg-inline-highlight {
   display: inline;
   border-radius: 3px;
