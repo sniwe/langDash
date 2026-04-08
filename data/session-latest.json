@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnbctq78-lgc4vb",
   "owner": "rhys",
-  "savedAt": "2026-04-08T01:05:40.950Z",
-  "updatedAt": "2026-04-08T01:05:40.950Z",
-  "revision": 1546,
+  "savedAt": "2026-04-08T01:17:04.152Z",
+  "updatedAt": "2026-04-08T01:17:04.152Z",
+  "revision": 1547,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -788,13 +788,14 @@
         {
           "nodeId": "card-mnpcjrf7-1",
           "value": "this is a test",
-          "html": "this is a test",
+          "html": "<b>this</b> is a test",
           "commentHtml": "",
-          "createdAt": "2026-04-08T01:05:40.513Z",
+          "createdAt": "2026-04-08T01:17:03.696Z",
           "children": [],
-          "anchorStart": null,
-          "anchorEnd": null,
-          "isStarter": false
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false,
+          "isSeedOrigin": false
         }
       ]
     },
@@ -804,8 +805,8 @@
       "84.650|577.956": "yabbies"
     },
     "selectedSpanIndex": 2,
-    "currentTime": 97.987716,
-    "wasPlaying": true
+    "currentTime": 95.248545,
+    "wasPlaying": false
   },
   "audioId": "869-ai-mp3-mnbctpxo-48oyhg",
   "audioUrl": "/api/audio?id=869-ai-mp3-mnbctpxo-48oyhg"
