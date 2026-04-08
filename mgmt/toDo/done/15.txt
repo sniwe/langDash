@@ -1,0 +1,35 @@
+comment bubble sizing behavior to preserve
+
+    replicate the current comment bubble growth pattern in any new implementation
+        start from intrinsic content sizing
+            use `display: inline-block`
+            use `width: fit-content`
+            keep `box-sizing: border-box`
+            keep the element aligned to the start of the card with `justify-self: start`
+        enforce a visible minimum width
+            apply `min-width: 20%` of the parent card width
+            this prevents short comments from collapsing into a tiny chip
+        cap horizontal growth
+            apply `max-width: calc(100% - 5px)`
+            the bubble should expand with content until it reaches that ceiling
+            after the ceiling, it must wrap text instead of growing wider
+        let content growth become height growth after the cap
+            keep `white-space: pre-wrap`
+            keep `word-break: break-word`
+            keep `overflow-wrap: anywhere`
+            keep `overflow: auto`
+            keep `min-height: 1.35em`
+            this preserves multi-line expansion while maintaining the horizontal limit
+        keep the existing spacing contract
+            retain `margin-left: 5px`
+            do not add any JS width measurement or explicit width assignment
+            the width behavior should remain CSS-driven
+        preserve the runtime reserve sync
+            after `input`, `change`, and `blur`, resync the parent card reserve from the bubble height
+            measure the bubble with `getBoundingClientRect().height`
+            set `--subseg-comment-bubble-reserve` on the card
+            clamp the reserve to at least `6px`
+            use roughly half the bubble height as the reserve value
+        keep focus styling non-destructive
+            focus should only change border and shadow
+            it must not change `width`, `min-width`, or `max-width`

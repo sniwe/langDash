@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   const LOGIN_STORAGE_KEY = "audioTest.auth";
   window.audioTestAppRuntimeLoaded = true;
   const boundFetch = window.fetch.bind(window);
@@ -255,7 +255,6 @@
     subSegCardLiveValueOverrides: {},
     subSegCardCommitTimerIds: {},
     subSegCardInternalChangeGuards: {},
-    subSegEnterChildSuppressionKey: "",
     subSegCardBubbleTargetIndexByKey: {},
     subSegCardFocusTransferStackByKey: {},
     subSegCardDeleteDialogKey: null,
@@ -1671,15 +1670,15 @@
         inputTitle: "Text Input",
         inputText: "Purpose: write your best attempt of the target subSeg audio. If words are uncertain, approximate from hearing only. Do not use dictionary or outside sources.",
         firstCardInputTitle: "Enter First Card Value",
-        firstCardInputText: "Type your first best-attempt text (example: 'å‰åŽä¸¤æ¸…') in the top input, use Enter for a new line if you want one, and blur to promote the blank card into a tracked card.",
+        firstCardInputText: "Type your first best-attempt text (example: '前后两清') in the top input, use Enter for a new line if you want one, and blur to promote the blank card into a tracked card.",
         cardsTitle: "First Version Saved",
         cardsText: "Blur saves the current text onto this card record.",
         cardEditTitle: "Edit To New Version",
-        cardEditText: "Focus this card, update your text after re-listening (example now: 'é’±è´§ä¸¤æ¸…'), then blur to save. The prior text remains as version history on the same card.",
+        cardEditText: "Focus this card, update your text after re-listening (example now: '钱货两清'), then blur to save. The prior text remains as version history on the same card.",
         cardChildSelectTitle: "Create Child Cards",
-        cardChildSelectText: "Goal: split a long parent phrase into a smaller focused idea you want to track as its own child card. On parent rich text 'é’±è´§ä¸¤æ¸…', focus the parent card editor, highlight 'é’±è´§', then press Enter.",
+        cardChildSelectText: "Goal: focus the rich editor, highlight a fragment, and observe normal editor selection behavior on the highlighted text.",
         cardChildCreatedTitle: "Child Card Created",
-        cardChildCreatedText: "After Enter, a child card appears directly under the parent using the selected fragment. Repeat on any child to nest deeper. Siblings are ordered by earliest highlighted index in the parent text, and each child indents +5px per level.",
+        cardChildCreatedText: "After Enter, the editor keeps native paragraph behavior and the selection remains in the current card.",
         cardNavVerticalTitle: "Move Between Cards",
         cardNavVerticalText: "Press Ctrl+Up or Ctrl+Down to move focus to another card.",
         cardNavHistoryTitle: "Edit Current Card",
@@ -2735,7 +2734,7 @@
     }
     if (phase === "player-card-first-input") {
       if (subSegValueInput) {
-        subSegValueInput.innerHTML = "å‰åŽä¸¤æ¸…";
+        subSegValueInput.innerHTML = "前后两清";
       }
       subSegValueList.innerHTML = "";
       return;
@@ -2768,7 +2767,7 @@
         const rootInput = document.createElement("input");
         rootInput.type = "text";
         rootInput.className = "subseg-value-card-input";
-        rootInput.value = "é’±è´§ä¸¤æ¸…";
+        rootInput.value = "钱货两清";
         rootInput.readOnly = true;
         rootInput.style.outline = "2px solid #6e92c9";
         rootInput.style.borderRadius = "4px";
@@ -2792,7 +2791,7 @@
           const childInput = document.createElement("input");
           childInput.type = "text";
           childInput.className = "subseg-value-card-input";
-          childInput.value = "é’±è´§";
+          childInput.value = "钱货";
           childInput.readOnly = true;
           childCard.appendChild(childVersion);
           childCard.appendChild(childInput);
@@ -2829,7 +2828,7 @@
         rootInput.type = "text";
         rootInput.className = "subseg-value-card-input";
         rootInput.id = "guide-nav-parent-input";
-        rootInput.value = "é’±è´§ä¸¤æ¸…";
+        rootInput.value = "钱货两清";
         rootInput.readOnly = false;
         rootInput.classList.add("guide-nav-caret-demo");
         rootInput.addEventListener("beforeinput", function (event) {
@@ -2855,7 +2854,7 @@
         childInput.type = "text";
         childInput.className = "subseg-value-card-input";
         childInput.id = "guide-nav-child-input";
-        childInput.value = "é’±è´§";
+        childInput.value = "钱货";
         childInput.readOnly = false;
         childInput.classList.add("guide-nav-caret-demo");
         childInput.addEventListener("beforeinput", function (event) {
@@ -4035,7 +4034,7 @@
   function resetPlaybackState() {
     clearCheckpointDragState();
     state.checkpoints = [];
-    state.subSegs = [];
+    state.subSegs = normalizeSubSegs(savedPlayback.subSegs);
     state.subSegValueEntries = {};
     state.subSegDraftHtmlByKey = {};
     state.audSegNoteEntries = {};
@@ -4567,59 +4566,6 @@
     void event;
   }
 
-  function setSubSegEnterChildSuppression(key, pathKey) {
-    state.subSegEnterChildSuppressionKey = getSubSegCardRecallStateKey(key, pathKey);
-    window.setTimeout(function () {
-      clearSubSegEnterChildSuppression();
-    }, 0);
-  }
-
-  function clearSubSegEnterChildSuppression() {
-    state.subSegEnterChildSuppressionKey = "";
-  }
-
-  function insertLineBreakInRichEditor(inputEl) {
-    if (!inputEl || !inputEl.isContentEditable) {
-      return false;
-    }
-    const selection = window.getSelection ? window.getSelection() : null;
-    if (!selection || selection.rangeCount <= 0) {
-      traceSubSegLog("linebreak:no-selection", {
-        key: String(inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : ""),
-        pathKey: String(inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : "")
-      });
-      return false;
-    }
-    const range = selection.getRangeAt(0);
-    if (!range || !inputEl.contains(range.startContainer) || !inputEl.contains(range.endContainer)) {
-      traceSubSegLog("linebreak:range-outside", {
-        key: String(inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : ""),
-        pathKey: String(inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : ""),
-        selectionText: String(selection.toString() || "")
-      });
-      return false;
-    }
-    traceSubSegLog("linebreak:insert", {
-      key: String(inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : ""),
-      pathKey: String(inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : ""),
-      selectionText: String(selection.toString() || "")
-    });
-    range.deleteContents();
-    const br = document.createElement("br");
-    range.insertNode(br);
-    const after = document.createRange();
-    after.setStartAfter(br);
-    after.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(after);
-    try {
-      inputEl.focus({ preventScroll: true });
-    } catch {
-      inputEl.focus();
-    }
-    return true;
-  }
-
   function handleSubSegRichEditorBeforeInput(event) {
     const inputType = String(event && event.inputType ? event.inputType : "");
     const inputEl = event ? event.target : null;
@@ -4636,54 +4582,6 @@
       inputText: getContentEditableDisplayText(inputEl)
     });
     if (inputType === "insertParagraph") {
-      const key = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : "");
-      const pathKey = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : "");
-      const suppressionKey = getSubSegCardRecallStateKey(key, pathKey);
-      if (suppressionKey && suppressionKey === state.subSegEnterChildSuppressionKey) {
-        event.preventDefault();
-        event.stopPropagation();
-        clearSubSegEnterChildSuppression();
-        return;
-      }
-      if (!inputEl || !inputEl.classList || !inputEl.classList.contains("subseg-value-card-input")) {
-        return;
-      }
-      const entry = getSubSegValueEntry(key, pathKey);
-      if (!entry) {
-        return;
-      }
-      traceSubSegLog("beforeinput:enter-child-attempt", {
-        key,
-        pathKey,
-        selectionText: selectionRange ? String(selection.toString() || "") : "",
-        selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : "",
-        selectionOffsets: selectionRange ? getContentEditableSelectionOffsets(inputEl, selectionRange) : null,
-        entryValue: String(entry.value || ""),
-        entryHtml: String(entry.html || ""),
-        childCount: Array.isArray(entry.children) ? entry.children.length : 0
-      });
-      const childPathKey = createChildCardFromSelection(key, pathKey, inputEl, entry);
-      if (!childPathKey) {
-        traceSubSegLog("beforeinput:enter-child-miss", {
-          key,
-          pathKey,
-          selectionText: selectionRange ? String(selection.toString() || "") : "",
-          selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : "",
-          selectionOffsets: selectionRange ? getContentEditableSelectionOffsets(inputEl, selectionRange) : null
-        });
-        return;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      traceSubSegLog("beforeinput:enter-child-success", {
-        key,
-        pathKey,
-        childPathKey
-      });
-      setSubSegEnterChildSuppression(key, pathKey);
-      renderSubSegValuePanel();
-      focusSubSegCardInput(key, childPathKey, false, { immediate: true });
-      enqueueAutoSave();
       return;
     }
     if (inputType !== "deleteWordBackward") {
@@ -4849,7 +4747,13 @@
         if (clippedEnd <= clippedStart) {
           return null;
         }
-        return { start: clippedStart, end: clippedEnd };
+        return {
+          start: clippedStart,
+          end: clippedEnd,
+          pathKey: String(range && range.pathKey ? range.pathKey : ""),
+          className: String(range && range.className ? range.className : ""),
+          tagName: String(range && range.tagName ? range.tagName : "")
+        };
       })
       .filter(Boolean)
       .sort(function (a, b) {
@@ -4859,13 +4763,38 @@
         return a.end - b.end;
       });
     const merged = [];
+    function getPathDepth(pathKey) {
+      return getSubSegValuePathArray(String(pathKey || "")).length;
+    }
+    function pickDeeperPathKey(a, b) {
+      const aDepth = getPathDepth(a);
+      const bDepth = getPathDepth(b);
+      if (aDepth !== bDepth) {
+        return aDepth > bDepth ? String(a || "") : String(b || "");
+      }
+      const aLen = String(a || "").length;
+      const bLen = String(b || "").length;
+      if (aLen !== bLen) {
+        return aLen > bLen ? String(a || "") : String(b || "");
+      }
+      return String(b || a || "");
+    }
     normalized.forEach(function (range) {
       const last = merged[merged.length - 1];
       if (last && range.start <= last.end) {
         last.end = Math.max(last.end, range.end);
+        last.pathKey = pickDeeperPathKey(last.pathKey, range.pathKey);
+        last.className = last.className || range.className;
+        last.tagName = last.tagName || range.tagName;
         return;
       }
-      merged.push({ start: range.start, end: range.end });
+      merged.push({
+        start: range.start,
+        end: range.end,
+        pathKey: String(range.pathKey || ""),
+        className: String(range.className || ""),
+        tagName: String(range.tagName || "")
+      });
     });
     return merged;
   }
@@ -4897,12 +4826,12 @@
     return html;
   }
 
-  function buildSubSegInlineBoldHtml(text, ranges) {
+  function buildSubSegInlineTaggedHtml(text, items, tagName, className) {
     const source = String(text || "");
     if (!source) {
       return "";
     }
-    const normalized = normalizeSubSegHighlightRanges(ranges, source.length);
+    const normalized = normalizeSubSegHighlightRanges(items, source.length);
     if (!normalized.length) {
       return textToDisplayHtml(source);
     }
@@ -4914,7 +4843,11 @@
       }
       const selected = source.slice(range.start, range.end);
       if (selected) {
-        html += "<strong>" + textToDisplayHtml(selected) + "</strong>";
+        const attrs = [];
+        if (className) {
+          attrs.push("class=\"" + className + "\"");
+        }
+        html += "<" + tagName + (attrs.length ? " " + attrs.join(" ") : "") + ">" + textToDisplayHtml(selected) + "</" + tagName + ">";
       }
       cursor = range.end;
     });
@@ -4924,11 +4857,21 @@
     return html;
   }
 
+  function buildSubSegInlineBoldHtml(text, ranges) {
+    return buildSubSegInlineTaggedHtml(text, ranges, "strong", "");
+  }
+
   function getSubSegCardHighlightRanges(visibleChildren) {
     return Array.isArray(visibleChildren)
       ? visibleChildren
         .map(function (item) {
-          return item && item.resolvedSelection ? item.resolvedSelection : null;
+          return item && item.resolvedSelection
+            ? {
+              start: item.resolvedSelection.start,
+              end: item.resolvedSelection.end,
+              pathKey: String(item.childPathKey || "")
+            }
+            : null;
         })
         .filter(Boolean)
       : [];
@@ -4939,10 +4882,14 @@
     const sourceText = getContentEditableDisplayText(null, html);
     const activeIndex = Number.isFinite(Number(activeBubbleIndex)) ? Math.floor(Number(activeBubbleIndex)) : -1;
     const activeRange = activeIndex >= 0 && Array.isArray(visibleChildren) && visibleChildren[activeIndex]
-      ? [visibleChildren[activeIndex].resolvedSelection]
+      ? [{
+        start: visibleChildren[activeIndex].resolvedSelection.start,
+        end: visibleChildren[activeIndex].resolvedSelection.end,
+        pathKey: String(visibleChildren[activeIndex].childPathKey || "")
+      }]
       : null;
     if (activeRange) {
-      return buildSubSegInlineHighlightHtml(sourceText, activeRange);
+      return buildSubSegInlineTaggedHtml(sourceText, activeRange, "span", "subseg-inline-highlight");
     }
     return buildSubSegInlineBoldHtml(sourceText, getSubSegCardHighlightRanges(visibleChildren));
   }
@@ -5008,6 +4955,9 @@
     bubble.addEventListener("blur", handleSubSegCommentBubbleInputBlur);
     setSubSegEditorHtml(bubble, getSubSegEntryCommentHtml(entry));
     card.appendChild(bubble);
+    requestAnimationFrame(function () {
+      syncSubSegCommentBubbleReserve(card, bubble);
+    });
     return bubble;
   }
 
@@ -5450,6 +5400,8 @@
     const entry = data && data.entry ? data.entry : null;
     const path = Array.isArray(data && data.path) ? data.path : [];
     const displayedValue = String(data && data.displayedValue ? data.displayedValue : "");
+    const selectionStart = Number.isFinite(Number(data && data.selectionStart)) ? Math.floor(Number(data.selectionStart)) : null;
+    const selectionEnd = Number.isFinite(Number(data && data.selectionEnd)) ? Math.floor(Number(data.selectionEnd)) : null;
     const sortedChildren = Array.isArray(data && data.sortedChildren)
       ? data.sortedChildren
       : getSortedChildEntries(entry && entry.children ? entry.children : []);
@@ -5460,7 +5412,7 @@
     sortedChildren.forEach(function (childEntry, childIndex) {
       const childPath = path.concat(childIndex);
       const childPathKey = getSubSegValuePathKey(childPath);
-      const resolvedSelection = resolveSubSegCardSelectionRange(displayedValue, childEntry);
+      const resolvedSelection = resolveSubSegCardSelectionRange(displayedValue, childEntry, selectionStart, selectionEnd);
       if (!resolvedSelection) {
         return;
       }
@@ -5477,7 +5429,7 @@
     return visibleChildren;
   }
 
-  function resolveSubSegCardSelectionRange(displayedValue, childEntry) {
+  function resolveSubSegCardSelectionRange(displayedValue, childEntry, selectionStartHint, selectionEndHint) {
     const text = String(displayedValue || "");
     const anchorStart = Number(childEntry && childEntry.anchorStart);
     const anchorEnd = Number(childEntry && childEntry.anchorEnd);
@@ -5488,14 +5440,21 @@
     if (!entryValue) {
       return null;
     }
-    const directRange = findBestSubSegTextMatchRange(text, entryValue, Number.isFinite(anchorStart) ? anchorStart : null, Number.isFinite(anchorEnd) ? anchorEnd : null);
+    const directRange = findBestSubSegTextMatchRange(
+      text,
+      entryValue,
+      Number.isFinite(anchorStart) ? anchorStart : null,
+      Number.isFinite(anchorEnd) ? anchorEnd : null,
+      Number.isFinite(selectionStartHint) ? selectionStartHint : null,
+      Number.isFinite(selectionEndHint) ? selectionEndHint : null
+    );
     if (directRange) {
       return trimSubSegSelectionRange(text, directRange);
     }
     return null;
   }
 
-  function findBestSubSegTextMatchRange(text, needle, anchorStart, anchorEnd) {
+  function findBestSubSegTextMatchRange(text, needle, anchorStart, anchorEnd, selectionStartHint, selectionEndHint) {
     const source = String(text || "");
     const target = String(needle || "");
     if (!source || !target) {
@@ -5510,11 +5469,25 @@
     if (!matches.length) {
       return null;
     }
-    if (Number.isFinite(anchorStart) && Number.isFinite(anchorEnd)) {
-      const targetCenter = (anchorStart + anchorEnd) / 2;
-      let bestIndex = matches[0];
+    const hasSelectionHint = Number.isFinite(selectionStartHint) && Number.isFinite(selectionEndHint) && selectionEndHint > selectionStartHint;
+    const targetCenter = Number.isFinite(anchorStart) && Number.isFinite(anchorEnd)
+      ? (anchorStart + anchorEnd) / 2
+      : hasSelectionHint
+        ? (selectionStartHint + selectionEndHint) / 2
+        : null;
+    let candidates = matches.slice();
+    if (hasSelectionHint) {
+      const containing = candidates.filter(function (candidate) {
+        return candidate <= selectionStartHint && (candidate + target.length) >= selectionEndHint;
+      });
+      if (containing.length > 0) {
+        candidates = containing;
+      }
+    }
+    if (targetCenter !== null) {
+      let bestIndex = candidates[0];
       let bestDistance = Math.abs((bestIndex + (target.length / 2)) - targetCenter);
-      matches.slice(1).forEach(function (candidate) {
+      candidates.slice(1).forEach(function (candidate) {
         const candidateDistance = Math.abs((candidate + (target.length / 2)) - targetCenter);
         if (candidateDistance < bestDistance) {
           bestDistance = candidateDistance;
@@ -5523,7 +5496,7 @@
       });
       return { start: bestIndex, end: bestIndex + target.length };
     }
-    const firstIndex = matches[0];
+    const firstIndex = candidates[0];
     return { start: firstIndex, end: firstIndex + target.length };
   }
 
@@ -6296,9 +6269,9 @@
     });
 
     if (isEnter) {
-      event.preventDefault();
-      event.stopPropagation();
       if (isCtrl) {
+        event.preventDefault();
+        event.stopPropagation();
         const insertedPathKey = insertBlankSubSegValueCardAfter(key, pathKey);
         if (insertedPathKey) {
           logRuntimeAction("subseg-card:insert-blank-after", {
@@ -6310,35 +6283,7 @@
         }
         return true;
       }
-      const childPathKey = createChildCardFromSelection(key, pathKey, active, entry);
-      if (childPathKey) {
-        setSubSegEnterChildSuppression(key, pathKey);
-        renderSubSegValuePanel();
-        focusSubSegCardInput(key, childPathKey, false, { immediate: true });
-        enqueueAutoSave();
-        traceSubSegLog("keydown:enter-child-success", {
-          key,
-          pathKey,
-          childPathKey
-        });
-        logRuntimeAction("subseg-card:enter-child", {
-          key,
-          pathKey,
-          childPathKey
-        });
-        return true;
-      }
-      traceSubSegLog("keydown:enter-child-miss", {
-        key,
-        pathKey,
-        selectionText: window.getSelection && window.getSelection().rangeCount > 0 ? String(window.getSelection().toString() || "") : "",
-        selectionHtml: window.getSelection && window.getSelection().rangeCount > 0 ? getContentEditableSelectionHtml(window.getSelection().getRangeAt(0)) : "",
-        selectionOffsets: window.getSelection && window.getSelection().rangeCount > 0 ? getContentEditableSelectionOffsets(active, window.getSelection().getRangeAt(0)) : null
-      });
-      if (insertLineBreakInRichEditor(active)) {
-        return true;
-      }
-      return true;
+      return false;
     }
 
     if (isSpace && isShift) {
@@ -6793,6 +6738,15 @@
     return getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
   }
 
+  function getSubSegCardDisplayedTextForPath(key, pathKey, entry) {
+    const stateKey = getSubSegCardRecallStateKey(key, pathKey);
+    const sourceHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)
+      ? String(state.subSegCardLiveValueOverrides[stateKey] || "")
+      : getSubSegEntryHtml(entry);
+    const sourceText = getContentEditableDisplayText(null, sourceHtml);
+    return String(sourceText || "");
+  }
+
   function syncSubSegCardFocusChain(key, pathKey) {
     if (!key || !subSegValueList) {
       return false;
@@ -7075,395 +7029,6 @@
   function createSubSegValueNodeId() {
     state.subSegValueNodeIdCounter += 1;
     return "card-" + Date.now().toString(36) + "-" + state.subSegValueNodeIdCounter.toString(36);
-  }
-
-  function createChildCardFromSelection(key, parentPathKey, inputEl, parentEntry) {
-    if (!key || !parentEntry || !inputEl) {
-      return "";
-    }
-    logRuntimeAction("subseg-card:create-child:start", {
-      key,
-      parentPathKey,
-      isRichEditor: Boolean(inputEl.isContentEditable)
-    });
-    const isRichEditor = Boolean(inputEl.isContentEditable);
-    const selection = isRichEditor && window.getSelection ? window.getSelection() : null;
-    const selectionRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-    traceSubSegLog("createChild:start", {
-      key,
-      parentPathKey,
-      isRichEditor,
-      inputHtml: String(inputEl && inputEl.innerHTML ? inputEl.innerHTML : ""),
-      inputText: getContentEditableDisplayText(inputEl),
-      selectionText: selectionRange ? String(selection.toString() || "") : "",
-      selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : "",
-      selectionOffsets: selectionRange ? getContentEditableSelectionOffsets(inputEl, selectionRange) : null,
-      entryValue: String(parentEntry.value || ""),
-      entryHtml: String(parentEntry.html || "")
-    });
-    let selectionStart = null;
-    let selectionEnd = null;
-    let selectedValue = "";
-    let selectedHtml = "";
-    if (isRichEditor) {
-      if (!selection || selection.rangeCount <= 0 || selection.isCollapsed) {
-        traceSubSegLog("createChild:rich-no-selection", {
-          key,
-          parentPathKey,
-          selectionCount: selection ? selection.rangeCount : 0,
-          isCollapsed: selection ? selection.isCollapsed : null
-        });
-        return "";
-      }
-      const range = selectionRange;
-      if (!range || !inputEl.contains(range.startContainer) || !inputEl.contains(range.endContainer)) {
-        traceSubSegLog("createChild:rich-range-outside", {
-          key,
-          parentPathKey,
-          selectionText: String(selection.toString() || "")
-        });
-        return "";
-      }
-      selectedValue = String(range.toString() || "").trim();
-      if (!selectedValue) {
-        traceSubSegLog("createChild:rich-empty-selection", {
-          key,
-          parentPathKey,
-          selectionText: String(selection.toString() || "")
-        });
-        return "";
-      }
-      const offsets = getContentEditableSelectionOffsets(inputEl, range);
-      if (!offsets) {
-        traceSubSegLog("createChild:rich-offsets-failed", {
-          key,
-          parentPathKey,
-          selectionText: String(selection.toString() || "")
-        });
-        return "";
-      }
-      selectionStart = offsets.start;
-      selectionEnd = offsets.end;
-      selectedHtml = getContentEditableSelectionHtml(range);
-    } else {
-      selectionStart = Number(inputEl.selectionStart);
-      selectionEnd = Number(inputEl.selectionEnd);
-      if (!Number.isFinite(selectionStart) || !Number.isFinite(selectionEnd) || selectionEnd <= selectionStart) {
-        return "";
-      }
-      const sourceValue = String(inputEl.value || "");
-      selectedValue = sourceValue.slice(selectionStart, selectionEnd).trim();
-      selectedHtml = textToSafeHtml(selectedValue);
-    }
-    if (!selectedValue) {
-      return "";
-    }
-    if (!Array.isArray(parentEntry.children)) {
-      parentEntry.children = [];
-    }
-    const parentPathArray = getSubSegValuePathArray(parentPathKey);
-    parentEntry.children = getSortedChildEntries(parentEntry.children);
-    const beforePathByNodeId = collectSubSegValueNodePathMap(parentEntry.children, parentPathArray, {});
-    const movedEntries = [];
-    const retainedEntries = [];
-    parentEntry.children.forEach(function (child, index) {
-      if (shouldReparentSubSegChildIntoSelection(child, selectionStart, selectionEnd, selectedValue)) {
-        movedEntries.push({
-          entry: child,
-          oldPathKey: getSubSegValuePathKey(parentPathArray.concat(index))
-        });
-        return;
-      }
-      retainedEntries.push(child);
-    });
-    parentEntry.children = retainedEntries;
-    movedEntries.forEach(function (item) {
-      rebaseSubSegEntryAnchorsToSelection(item.entry, selectionStart);
-    });
-    traceSubSegLog("createChild:reparent-candidates", {
-      key,
-      parentPathKey,
-      movedCount: movedEntries.length,
-      movedPaths: movedEntries.map(function (item) { return item.oldPathKey; })
-    });
-    traceSubSegLog("createChild:before-push", {
-      key,
-      parentPathKey,
-      selectedValue,
-      selectedHtml,
-      selectionStart,
-      selectionEnd,
-      childCountBefore: parentEntry.children.length
-    });
-    const createdAt = new Date().toISOString();
-    const childNode = {
-      nodeId: createSubSegValueNodeId(),
-      value: selectedValue,
-      html: String(selectedHtml || textToSafeHtml(selectedValue)),
-      commentHtml: "",
-      createdAt,
-      children: [],
-      anchorStart: selectionStart,
-      anchorEnd: selectionEnd,
-      isSeedOrigin: true
-    };
-    childNode.children = getSortedChildEntries(movedEntries.map(function (item) { return item.entry; }));
-    parentEntry.children.push(childNode);
-    parentEntry.children = getSortedChildEntries(parentEntry.children);
-    const childIndex = parentEntry.children.findIndex(function (child) {
-      return child && child.nodeId === childNode.nodeId;
-    });
-    if (childIndex < 0) {
-      traceSubSegLog("createChild:index-missing", {
-        key,
-        parentPathKey,
-        selectedValue
-      });
-      return "";
-    }
-    const childPathKey = getSubSegValuePathKey(parentPathKey + "." + String(childIndex));
-    const afterPathByNodeId = collectSubSegValueNodePathMap(parentEntry.children, parentPathArray, {});
-    remapSubSegPathStateAfterTreeMutation({
-      data: {
-        key,
-        beforePathByNodeId,
-        afterPathByNodeId
-      },
-      deps: {}
-    });
-    traceSubSegLog("createChild:after-push", {
-      key,
-      parentPathKey,
-      childIndex,
-      childPathKey,
-      childCountAfter: parentEntry.children.length,
-      selectedValue,
-      selectedHtml,
-      selectionStart,
-      selectionEnd
-    });
-    logRuntimeAction("subseg-card:create-child:success", {
-      key,
-      parentPathKey,
-      childPathKey,
-      childIndex,
-      selectedValue
-    });
-    return childPathKey;
-  }
-
-  function shouldReparentSubSegChildIntoSelection(entry, selectionStart, selectionEnd, selectedValue) {
-    if (!entry || !Number.isFinite(selectionStart) || !Number.isFinite(selectionEnd) || selectionEnd <= selectionStart) {
-      return false;
-    }
-    const childStart = Number(entry.anchorStart);
-    const childEnd = Number(entry.anchorEnd);
-    if (Number.isFinite(childStart) && Number.isFinite(childEnd) && childEnd > childStart) {
-      return childStart >= selectionStart && childEnd <= selectionEnd;
-    }
-    const childText = String(entry.value || "").trim();
-    const selectedText = String(selectedValue || "").trim();
-    return Boolean(childText && selectedText && childText === selectedText);
-  }
-
-  function rebaseSubSegEntryAnchorsToSelection(entry, selectionStart) {
-    if (!entry || !Number.isFinite(selectionStart)) {
-      return;
-    }
-    const childStart = Number(entry.anchorStart);
-    const childEnd = Number(entry.anchorEnd);
-    if (!Number.isFinite(childStart) || !Number.isFinite(childEnd)) {
-      return;
-    }
-    entry.anchorStart = Math.max(0, Math.floor(childStart - selectionStart));
-    entry.anchorEnd = Math.max(0, Math.floor(childEnd - selectionStart));
-  }
-
-  function collectSubSegValueNodePathMap(nodes, pathPrefix, map) {
-    const target = map && typeof map === "object" ? map : {};
-    const list = Array.isArray(nodes) ? nodes : [];
-    const basePath = Array.isArray(pathPrefix) ? pathPrefix.slice() : [];
-    list.forEach(function (entry, index) {
-      if (!entry || typeof entry !== "object") {
-        return;
-      }
-      const path = basePath.concat(index);
-      if (typeof entry.nodeId === "string" && entry.nodeId) {
-        target[entry.nodeId] = getSubSegValuePathKey(path);
-      }
-      if (Array.isArray(entry.children) && entry.children.length > 0) {
-        collectSubSegValueNodePathMap(entry.children, path, target);
-      }
-    });
-    return target;
-  }
-
-  function remapSubSegPathStateAfterTreeMutation(ctx) {
-    const { data } = ctx || {};
-    const key = String(data && data.key ? data.key : "");
-    const beforePathByNodeId = data && data.beforePathByNodeId && typeof data.beforePathByNodeId === "object"
-      ? data.beforePathByNodeId
-      : {};
-    const afterPathByNodeId = data && data.afterPathByNodeId && typeof data.afterPathByNodeId === "object"
-      ? data.afterPathByNodeId
-      : {};
-    if (!key || !Object.keys(beforePathByNodeId).length) {
-      return;
-    }
-    logRuntimeAction("subseg-tree:remap-start", {
-      key,
-      beforeNodeCount: Object.keys(beforePathByNodeId).length,
-      afterNodeCount: Object.keys(afterPathByNodeId).length
-    });
-    const beforeNodeIdByPath = {};
-    Object.keys(beforePathByNodeId).forEach(function (nodeId) {
-      const pathKey = String(beforePathByNodeId[nodeId] || "");
-      if (pathKey) {
-        beforeNodeIdByPath[pathKey] = nodeId;
-      }
-    });
-
-    const nextBubbleTargets = {};
-    const nextLiveOverrides = {};
-    const nextInternalGuards = {};
-    const nextCommitTimers = {};
-    const nextTransferStacks = {};
-    const movedTimerKeys = [];
-    const currentBubbleTargetEntries = Object.entries(state.subSegCardBubbleTargetIndexByKey || {});
-    const currentLiveOverrideEntries = Object.entries(state.subSegCardLiveValueOverrides || {});
-    const currentInternalGuardEntries = Object.entries(state.subSegCardInternalChangeGuards || {});
-    const currentCommitTimerEntries = Object.entries(state.subSegCardCommitTimerIds || {});
-    const currentTransferStackEntries = Object.entries(state.subSegCardFocusTransferStackByKey || {});
-    const oldDeleteDialogKey = String(state.subSegCardDeleteDialogKey || "");
-    const oldSuppressionKey = String(state.subSegEnterChildSuppressionKey || "");
-
-    function remapExactStateKey(stateKey, value) {
-      const parts = splitSubSegStateKey(stateKey);
-      if (parts.key !== key) {
-        return { stateKey, changed: false, value };
-      }
-      const nodeId = beforeNodeIdByPath[parts.pathKey];
-      const nextPathKey = nodeId ? String(afterPathByNodeId[nodeId] || "") : "";
-      if (!nodeId || !nextPathKey || nextPathKey === parts.pathKey) {
-        return { stateKey, changed: false, value };
-      }
-      return {
-        stateKey: getSubSegCardRecallStateKey(key, nextPathKey),
-        changed: true,
-        value,
-        nextPathKey
-      };
-    }
-
-    currentBubbleTargetEntries.forEach(function (entry) {
-      const stateKey = String(entry[0] || "");
-      const value = entry[1];
-      const remapped = remapExactStateKey(stateKey, value);
-      nextBubbleTargets[remapped.stateKey] = remapped.value;
-    });
-
-    currentLiveOverrideEntries.forEach(function (entry) {
-      const stateKey = String(entry[0] || "");
-      const value = entry[1];
-      const remapped = remapExactStateKey(stateKey, value);
-      nextLiveOverrides[remapped.stateKey] = remapped.value;
-    });
-
-    currentInternalGuardEntries.forEach(function (entry) {
-      const stateKey = String(entry[0] || "");
-      const value = entry[1];
-      const remapped = remapExactStateKey(stateKey, value);
-      nextInternalGuards[remapped.stateKey] = remapped.value;
-    });
-
-    currentCommitTimerEntries.forEach(function (entry) {
-      const stateKey = String(entry[0] || "");
-      const timerId = Number(entry[1]);
-      const remapped = remapExactStateKey(stateKey, timerId);
-      if (remapped.changed) {
-        if (Number.isFinite(timerId) && timerId > 0) {
-          window.clearTimeout(timerId);
-        }
-        movedTimerKeys.push(remapped.stateKey);
-      } else {
-        nextCommitTimers[remapped.stateKey] = remapped.value;
-      }
-    });
-
-    currentTransferStackEntries.forEach(function (entry) {
-      const stateKey = String(entry[0] || "");
-      const stack = Array.isArray(entry[1]) ? entry[1] : [];
-      const parts = splitSubSegStateKey(stateKey);
-      if (parts.key !== key) {
-        if (stack.length > 0) {
-          nextTransferStacks[stateKey] = stack.slice();
-        }
-        return;
-      }
-      const nextStack = [];
-      stack.forEach(function (record) {
-        if (!record || typeof record !== "object") {
-          return;
-        }
-        const fromNodeId = String(record.fromNodeId || "");
-        const toNodeId = String(record.toNodeId || "");
-        const nextFromPathKey = fromNodeId && afterPathByNodeId[fromNodeId] ? String(afterPathByNodeId[fromNodeId] || "") : "";
-        const nextToPathKey = toNodeId && afterPathByNodeId[toNodeId] ? String(afterPathByNodeId[toNodeId] || "") : "";
-        if (!nextFromPathKey || !nextToPathKey) {
-          return;
-        }
-        nextStack.push({
-          fromNodeId,
-          fromPathKey: nextFromPathKey,
-          toNodeId,
-          toPathKey: nextToPathKey,
-          bubbleTargetIndex: Number.isFinite(Number(record.bubbleTargetIndex)) ? Math.floor(Number(record.bubbleTargetIndex)) : -1,
-          createdAt: String(record.createdAt || "")
-        });
-      });
-      if (nextStack.length > 0) {
-        nextTransferStacks[stateKey] = nextStack;
-      }
-    });
-
-    state.subSegCardBubbleTargetIndexByKey = nextBubbleTargets;
-    state.subSegCardLiveValueOverrides = nextLiveOverrides;
-    state.subSegCardInternalChangeGuards = nextInternalGuards;
-    state.subSegCardCommitTimerIds = nextCommitTimers;
-    state.subSegCardFocusTransferStackByKey = nextTransferStacks;
-    logRuntimeAction("subseg-tree:remap-complete", {
-      key,
-      bubbleTargetCount: Object.keys(nextBubbleTargets).length,
-      liveOverrideCount: Object.keys(nextLiveOverrides).length,
-      internalGuardCount: Object.keys(nextInternalGuards).length,
-      commitTimerCount: Object.keys(nextCommitTimers).length,
-      transferStackCount: Object.keys(nextTransferStacks).length,
-      movedTimerKeys: movedTimerKeys.slice()
-    });
-
-    if (oldDeleteDialogKey) {
-      const deleteParts = splitSubSegStateKey(oldDeleteDialogKey);
-      const deleteNodeId = deleteParts.key === key ? beforeNodeIdByPath[deleteParts.pathKey] : "";
-      if (deleteNodeId && afterPathByNodeId[deleteNodeId]) {
-        state.subSegCardDeleteDialogKey = getSubSegCardRecallStateKey(key, afterPathByNodeId[deleteNodeId]);
-      }
-    }
-
-    if (oldSuppressionKey) {
-      const suppressionParts = splitSubSegStateKey(oldSuppressionKey);
-      const suppressionNodeId = suppressionParts.key === key ? beforeNodeIdByPath[suppressionParts.pathKey] : "";
-      if (suppressionNodeId && afterPathByNodeId[suppressionNodeId]) {
-        state.subSegEnterChildSuppressionKey = getSubSegCardRecallStateKey(key, afterPathByNodeId[suppressionNodeId]);
-      }
-    }
-
-    movedTimerKeys.forEach(function (stateKey) {
-      const html = String(state.subSegCardLiveValueOverrides[stateKey] || "");
-      if (html && String(html).trim()) {
-        const remappedParts = splitSubSegStateKey(stateKey);
-        scheduleSubSegCardCommitDebounced(remappedParts.key, remappedParts.pathKey);
-      }
-    });
   }
 
   function focusStarterSubSegInput() {
@@ -8186,8 +7751,6 @@
     state.targetSpanIndex = -1;
     state.targetStart = null;
     state.targetEnd = null;
-    state.targetSubSegs = [];
-    state.selectedTargetSubSegIndex = -1;
     state.subSegCardInternalChangeGuards = {};
     state.subSegCardDeleteDialogKey = null;
     state.activeSubSegValueKey = null;
@@ -8736,7 +8299,9 @@
     state.currentFile = null;
     state.pendingUpload = null;
     state.checkpoints = [];
-    state.subSegs = [];
+    if (Array.isArray(savedPlayback.subSegs)) {
+      state.subSegs = normalizeSubSegs(savedPlayback.subSegs);
+    }
     state.subSegValueEntries = {};
     state.subSegDraftHtmlByKey = {};
     state.subSegCardLiveValueOverrides = {};
@@ -8749,8 +8314,12 @@
     state.targetSpanIndex = -1;
     state.targetStart = null;
     state.targetEnd = null;
-    state.targetSubSegs = [];
-    state.selectedTargetSubSegIndex = -1;
+    if (Array.isArray(savedPlayback.targetSubSegs)) {
+      state.targetSubSegs = safeClone(savedPlayback.targetSubSegs);
+    }
+    if (Number.isInteger(savedPlayback.selectedTargetSubSegIndex)) {
+      state.selectedTargetSubSegIndex = savedPlayback.selectedTargetSubSegIndex;
+    }
     state.activeSubSegValueKey = null;
     state.deleteTargetType = "";
     state.deleteTargetIndex = -1;
@@ -8844,13 +8413,21 @@
     state.checkpoints = Array.isArray(savedPlayback.checkpoints)
       ? savedPlayback.checkpoints.filter(function (v) { return Number.isFinite(v) && v >= 0; }).sort(function (a, b) { return a - b; })
       : [];
-    state.subSegs = normalizeSubSegs(savedPlayback.subSegs);
+    if (Array.isArray(savedPlayback.subSegs)) {
+      state.subSegs = normalizeSubSegs(savedPlayback.subSegs);
+    }
     state.subSegValueEntries = normalizeSubSegValueEntries(savedPlayback.subSegValueEntries);
     state.subSegDraftHtmlByKey = {};
     state.subSegCardFocusTransferStackByKey = {};
     state.audSegNoteEntries = normalizeAudSegNoteEntries(savedPlayback.audSegNoteEntries);
     state.audSegNoteEditorVisible = false;
     state.activeSubSegValueKey = null;
+    if (Array.isArray(savedPlayback.targetSubSegs)) {
+      state.targetSubSegs = safeClone(savedPlayback.targetSubSegs);
+    }
+    if (Number.isInteger(savedPlayback.selectedTargetSubSegIndex)) {
+      state.selectedTargetSubSegIndex = savedPlayback.selectedTargetSubSegIndex;
+    }
 
     clearTargetSpanLock({ preserveSelection: false });
     const restoredSelectedSpanIndex = Number.isInteger(savedPlayback.selectedSpanIndex)
@@ -8943,19 +8520,6 @@
       state.selectedTargetSubSegIndex = snapshot.selectedTargetSubSegIndex;
     }
     state.activeSubSegValueKey = String(snapshot.activeSubSegValueKey || "");
-    if (
-      state.activeSubSegValueKey &&
-      Array.isArray(state.targetSubSegs) &&
-      state.targetSubSegs.length > 0 &&
-      (!Number.isInteger(state.selectedTargetSubSegIndex) || state.selectedTargetSubSegIndex < 0)
-    ) {
-      const matchedTargetIndex = state.targetSubSegs.findIndex(function (seg) {
-        return getSubSegValueKey(seg) === state.activeSubSegValueKey;
-      });
-      if (matchedTargetIndex >= 0) {
-        state.selectedTargetSubSegIndex = matchedTargetIndex;
-      }
-    }
 
     state.deleteTargetType = String(snapshot.deleteTargetType || "");
     state.deleteTargetIndex = Number.isInteger(snapshot.deleteTargetIndex) ? snapshot.deleteTargetIndex : -1;

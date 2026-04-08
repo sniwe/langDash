@@ -1,0 +1,18 @@
+﻿{
+    "id":  "queue-maintenance-done-copy-state",
+    "updated":  "2026-04-07T09:32:53.8128731+08:00",
+    "initialized":  true,
+    "seenPaths":  [
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\1.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\11.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\12.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\14.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\15.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\2.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\4.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\5.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\6.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\7.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\8.txt"
+                  ]
+}

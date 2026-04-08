@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnbctq78-lgc4vb",
   "owner": "rhys",
-  "savedAt": "2026-04-06T12:45:19.099Z",
-  "updatedAt": "2026-04-06T12:45:19.099Z",
-  "revision": 1381,
+  "savedAt": "2026-04-08T01:05:40.950Z",
+  "updatedAt": "2026-04-08T01:05:40.950Z",
+  "revision": 1546,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -18,74 +18,9 @@
     ],
     "subSegs": [
       {
-        "start": 5.933508,
-        "end": 10.390865,
-        "createdAt": "2026-03-30T02:54:25.006Z"
-      },
-      {
-        "start": 10.886503,
-        "end": 14.129537,
-        "createdAt": "2026-03-30T23:25:35.868Z"
-      },
-      {
-        "start": 16.842343,
-        "end": 19.498242,
-        "createdAt": "2026-03-30T23:25:44.525Z"
-      },
-      {
-        "start": 23.16047,
-        "end": 27.195763,
-        "createdAt": "2026-03-30T23:25:54.925Z"
-      },
-      {
-        "start": 31.365516,
-        "end": 32.849649,
-        "createdAt": "2026-03-30T23:26:04.662Z"
-      },
-      {
-        "start": 34.88552,
-        "end": 38.365684,
-        "createdAt": "2026-03-30T23:26:16.763Z"
-      },
-      {
-        "start": 50.178856,
-        "end": 52.932184,
-        "createdAt": "2026-04-01T02:13:52.070Z"
-      },
-      {
-        "start": 54.761806,
-        "end": 57.953221,
-        "createdAt": "2026-04-01T02:20:01.798Z"
-      },
-      {
-        "start": 61.326849,
-        "end": 63.51752,
-        "createdAt": "2026-04-01T02:30:42.070Z"
-      },
-      {
-        "start": 71.584189,
-        "end": 74.177385,
-        "createdAt": "2026-04-01T02:34:16.977Z"
-      },
-      {
-        "start": 75.29619,
-        "end": 78.133736,
-        "createdAt": "2026-04-01T10:16:27.116Z"
-      },
-      {
-        "start": 80.27297,
-        "end": 83.891958,
-        "createdAt": "2026-04-01T02:39:31.005Z"
-      },
-      {
-        "start": 87.666876,
-        "end": 90.918623,
-        "createdAt": "2026-04-01T12:32:07.324Z"
-      },
-      {
-        "start": 95.768024,
-        "end": 100.20563,
-        "createdAt": "2026-04-06T11:25:00.362Z"
+        "start": 95.248545,
+        "end": 98.025193,
+        "createdAt": "2026-04-08T01:05:33.270Z"
       }
     ],
     "subSegValueEntries": {
@@ -735,21 +670,21 @@
         {
           "nodeId": "card-mni65kzm-1",
           "value": "qianhou两清就完事了",
-          "html": "qianhou两清就完事了",
+          "html": "<strong>qianhou两清</strong>就完事了",
           "commentHtml": "",
           "createdAt": "2026-04-03T00:32:49.981Z",
           "children": [
             {
               "nodeId": "card-mnirbrsc-2",
               "value": "qianhou",
-              "html": "qianhou",
+              "html": "<strong>qianhou</strong>",
               "commentHtml": "",
               "createdAt": "2026-04-03T10:24:53.868Z",
               "children": [
                 {
                   "nodeId": "card-mnir8jnd-1",
                   "value": "qianhou前后",
-                  "html": "qianhou前后<br>",
+                  "html": "qianhou前后",
                   "commentHtml": "",
                   "createdAt": "2026-04-03T10:24:44.383Z",
                   "children": [],
@@ -785,41 +720,81 @@
       ],
       "95.768|100.206": [
         {
-          "nodeId": "card-mnn3soyq-3",
-          "value": "qianhou两清",
-          "html": "<strong>qianhou</strong>两清",
+          "nodeId": "card-mnohp8gq-1",
+          "value": "vibe shit code",
+          "html": "<strong data-sub-seg-child-path=\"0.0\">vibe shit</strong> code",
           "commentHtml": "",
-          "createdAt": "2026-04-06T12:31:22.970Z",
+          "createdAt": "2026-04-07T10:42:21.049Z",
           "children": [
             {
-              "nodeId": "card-mnn6isur-3",
-              "value": "qianhoutest extra line",
-              "html": "<strong>qian</strong>hou<br><br>test extra line",
+              "nodeId": "card-mnpb7f3b-1",
+              "value": "vibe shit",
+              "html": "vibe <strong data-sub-seg-child-path=\"0.0.1\">shit</strong>",
               "commentHtml": "",
-              "createdAt": "2026-04-06T12:41:29.996Z",
+              "createdAt": "2026-04-08T00:28:00.167Z",
               "children": [
                 {
-                  "nodeId": "card-mnn6nsiv-1",
-                  "value": "qiansecond",
-                  "html": "qian<br><br>second",
+                  "nodeId": "card-mnpbajlo-4",
+                  "value": "sh",
+                  "html": "sh",
                   "commentHtml": "",
-                  "createdAt": "2026-04-06T12:45:18.790Z",
+                  "createdAt": "2026-04-08T00:30:25.980Z",
                   "children": [],
-                  "anchorStart": 0,
-                  "anchorEnd": 4,
-                  "isSeedOrigin": false
+                  "anchorStart": 5,
+                  "anchorEnd": 7,
+                  "isStarter": false,
+                  "isSeedOrigin": true
+                },
+                {
+                  "nodeId": "card-mnpbadgd-3",
+                  "value": "shit",
+                  "html": "shit",
+                  "commentHtml": "",
+                  "createdAt": "2026-04-08T00:30:18.013Z",
+                  "children": [],
+                  "anchorStart": 5,
+                  "anchorEnd": 9,
+                  "isStarter": false,
+                  "isSeedOrigin": true
                 }
               ],
               "anchorStart": 0,
-              "anchorEnd": 7,
+              "anchorEnd": 9,
               "isStarter": false,
-              "isSeedOrigin": false
+              "isSeedOrigin": true
             }
           ],
           "anchorStart": 0,
           "anchorEnd": 0,
           "isStarter": false,
           "isSeedOrigin": false
+        }
+      ],
+      "96.015|102.754": [
+        {
+          "nodeId": "card-mnpccjl0-1",
+          "value": "test test test",
+          "html": "test test test",
+          "commentHtml": "",
+          "createdAt": "2026-04-08T01:00:03.683Z",
+          "children": [],
+          "anchorStart": 0,
+          "anchorEnd": 0,
+          "isStarter": false,
+          "isSeedOrigin": false
+        }
+      ],
+      "95.249|98.025": [
+        {
+          "nodeId": "card-mnpcjrf7-1",
+          "value": "this is a test",
+          "html": "this is a test",
+          "commentHtml": "",
+          "createdAt": "2026-04-08T01:05:40.513Z",
+          "children": [],
+          "anchorStart": null,
+          "anchorEnd": null,
+          "isStarter": false
         }
       ]
     },
@@ -829,8 +804,8 @@
       "84.650|577.956": "yabbies"
     },
     "selectedSpanIndex": 2,
-    "currentTime": 95.768024,
-    "wasPlaying": false
+    "currentTime": 97.987716,
+    "wasPlaying": true
   },
   "audioId": "869-ai-mp3-mnbctpxo-48oyhg",
   "audioUrl": "/api/audio?id=869-ai-mp3-mnbctpxo-48oyhg"
