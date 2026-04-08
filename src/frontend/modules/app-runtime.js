@@ -4558,12 +4558,74 @@
     commitSubSegDraftValue();
   }
 
+  function getSubSegRichEditorSelectionState(inputEl) {
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!inputEl || !selection || selection.rangeCount <= 0) {
+      return null;
+    }
+    const range = selection.getRangeAt(0);
+    if (!range || range.collapsed) {
+      return null;
+    }
+    if (!inputEl.contains(range.startContainer) || !inputEl.contains(range.endContainer)) {
+      return null;
+    }
+    return {
+      selection,
+      range
+    };
+  }
+
+  function wrapSubSegRichEditorSelectionWithSpan(inputEl, className) {
+    const selectionState = getSubSegRichEditorSelectionState(inputEl);
+    if (!selectionState) {
+      return false;
+    }
+    const selectionText = String(selectionState.selection.toString() || "");
+    if (!String(selectionText || "").trim()) {
+      return false;
+    }
+    const marker = document.createElement("span");
+    marker.className = String(className || "subseg-inline-highlight");
+    marker.appendChild(selectionState.range.extractContents());
+    selectionState.range.insertNode(marker);
+
+    const nextRange = document.createRange();
+    nextRange.setStartAfter(marker);
+    nextRange.collapse(true);
+    selectionState.selection.removeAllRanges();
+    selectionState.selection.addRange(nextRange);
+    return true;
+  }
+
   function handleSubSegDraftBeforeInput(event) {
     handleSubSegRichEditorBeforeInput(event);
   }
 
   function handleSubSegDraftKeyDown(event) {
-    void event;
+    const keyCode = String(event && event.code ? event.code : "");
+    const keyValue = String(event && event.key ? event.key : "");
+    const isEnter = keyCode === "Enter" || keyValue === "Enter";
+    if (!isEnter || !subSegValueInput || event.currentTarget !== subSegValueInput) {
+      return;
+    }
+    const selectionState = getSubSegRichEditorSelectionState(subSegValueInput);
+    if (!selectionState) {
+      return;
+    }
+    const selectionText = String(selectionState.selection.toString() || "");
+    event.preventDefault();
+    event.stopPropagation();
+    if (!wrapSubSegRichEditorSelectionWithSpan(subSegValueInput, "subseg-inline-highlight")) {
+      return;
+    }
+    logRuntimeAction("subseg-draft:mark-selection", {
+      key: String(state.activeSubSegValueKey || ""),
+      selectionText,
+      selectionHtml: getContentEditableSelectionHtml(selectionState.range)
+    });
+    handleSubSegDraftInput();
+    enqueueAutoSave();
   }
 
   function handleSubSegRichEditorBeforeInput(event) {
@@ -4581,6 +4643,21 @@
       inputHtml: String(inputEl && inputEl.innerHTML ? inputEl.innerHTML : ""),
       inputText: getContentEditableDisplayText(inputEl)
     });
+    if (inputEl === subSegValueInput && inputType === "insertParagraph") {
+      const selectionText = String(selection && selection.rangeCount > 0 ? selection.toString() || "" : "");
+      if (wrapSubSegRichEditorSelectionWithSpan(inputEl, "subseg-inline-highlight")) {
+        event.preventDefault();
+        event.stopPropagation();
+        logRuntimeAction("subseg-draft:mark-selection", {
+          key: String(state.activeSubSegValueKey || ""),
+          selectionText,
+          selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : ""
+        });
+        handleSubSegDraftInput();
+        enqueueAutoSave();
+      }
+      return;
+    }
     if (inputType === "insertParagraph") {
       return;
     }
@@ -4890,6 +4967,9 @@
       : null;
     if (activeRange) {
       return buildSubSegInlineTaggedHtml(sourceText, activeRange, "span", "subseg-inline-highlight");
+    }
+    if (!Array.isArray(visibleChildren) || visibleChildren.length === 0) {
+      return String(sourceHtml || textToDisplayHtml(sourceText));
     }
     return buildSubSegInlineBoldHtml(sourceText, getSubSegCardHighlightRanges(visibleChildren));
   }
