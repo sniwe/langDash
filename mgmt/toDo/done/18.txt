@@ -1,0 +1,4 @@
+
+identify audSeg progress bar, which has subSeg bubbles positioned along it. report back to me with minimal summary to confirm understanding.
+
+while audSeg progress bar visible, let player-head (rightmost position, right aligned) show a "clear subSegs" button. when clicked, clear subSegs of selected audSeg (clearing data for those subSegs cleanly) then refresh display of audSeg progress bar

@@ -1,6 +1,6 @@
 ﻿{
     "id":  "queue-maintenance-done-copy-state",
-    "updated":  "2026-04-07T09:32:53.8128731+08:00",
+    "updated":  "2026-04-09T10:54:02.4567891+08:00",
     "initialized":  true,
     "seenPaths":  [
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\1.txt",
@@ -8,7 +8,15 @@
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\12.txt",
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\14.txt",
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\15.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\16.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\17.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\19.txt",
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\2.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\20.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\21.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\22.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\23.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\24.txt",
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\4.txt",
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\5.txt",
                       "C:\\Users\\Qub\\audioTest\\mgmt\\toDo\\done\\6.txt",

@@ -1,0 +1,11 @@
+
+identify code connected to the following and do a scan of it as context to prep for developing this code. give one word repsonse when done "ready";
+
+update to ensure spans don't capture whitespace trim on either side of the highlight
+    let this include active removal of whitespace trim off of stored subSeg data spans
+
+i have noticed that when caret is positioned immediaely after a span and new text is typed, the new text is erroneously included in the span
+    modify to prevent this by default'
+    only add to span if the span in question is teh currently targeted span and caret is in the appropriate position (within or immediately adjacent to span bounds)
+    when targeted span is active and caret sits on span border, keep caret stable on that edge and do not alternate between start/end on each keypress
+

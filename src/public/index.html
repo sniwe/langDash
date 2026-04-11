@@ -27,7 +27,6 @@
         <div class="library-head-left">
           <button id="modules-button" class="logout-button hidden" type="button" aria-label="Back to modules">Back</button>
           <button id="guide-button-list" class="guide-button hidden" type="button" aria-label="Start guide mode">Guide</button>
-          <button id="logout-button" class="logout-button" type="button" aria-label="Log out" title="Log out">Logout</button>
         </div>
         <div class="library-head-right">
           <div class="settings-popover-wrap">
@@ -57,6 +56,9 @@
         </div>
       </div>
       <section id="module-dashboard" class="module-dashboard">
+        <div class="module-dashboard-head">
+          <button id="logout-button" class="logout-button hidden" type="button" aria-label="Log out" title="Log out">Logout</button>
+        </div>
         <p class="module-dashboard-kicker">Post-login modules</p>
         <p id="module-status" class="save-status"></p>
         <div id="module-grid" class="module-grid"></div>
@@ -74,6 +76,7 @@
       <div class="player-head">
         <button id="back-button" class="back-button" type="button" aria-label="Back to audio list">Back</button>
         <button id="guide-button-player" class="guide-button" type="button" aria-label="Start guide mode">Guide</button>
+        <button id="clear-subsegs-button" class="clear-subsegs-button hidden" type="button" aria-label="Clear subSegs for selected audSeg" title="Clear subSegs">clear subSegs</button>
       </div>
       <p id="file-name" class="file-name"></p>
       <div id="player-loading" class="player-loading hidden" aria-live="polite">

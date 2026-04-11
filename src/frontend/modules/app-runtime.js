@@ -59,6 +59,7 @@
   const guideButtonList = document.getElementById("guide-button-list");
   const modulesButton = document.getElementById("modules-button");
   const guideButtonPlayer = document.getElementById("guide-button-player");
+  const clearSubSegsButton = document.getElementById("clear-subsegs-button");
   const guideOverlay = document.getElementById("guide-overlay");
   const guideSpotlight = document.getElementById("guide-spotlight");
   const guideTooltip = document.getElementById("guide-tooltip");
@@ -176,9 +177,20 @@
 
   async function setLoggingEnabled(nextEnabled) {
     const enabled = Boolean(nextEnabled);
+    const previousEnabled = Boolean(loggingEnabled);
     loggingEnabled = enabled;
     persistLoggingPreference(enabled);
-    if (runtimeLogger && typeof runtimeLogger.setEnabled === "function") {
+    if (enabled && runtimeLogger && typeof runtimeLogger.setEnabled === "function") {
+      await runtimeLogger.setEnabled({ data: { enabled }, deps: {} });
+    }
+    logRuntimeAction("settings:state-action-logging-toggle", {
+      enabled,
+      previousEnabled,
+      authUser: state.authUser,
+      workspacePhase: state.workspacePhase
+    });
+    logRuntimeState("settings.stateActionLoggingEnabled", previousEnabled, enabled);
+    if (!enabled && runtimeLogger && typeof runtimeLogger.setEnabled === "function") {
       await runtimeLogger.setEnabled({ data: { enabled }, deps: {} });
     }
     syncSettingsUi();
@@ -256,6 +268,7 @@
     subSegCardCommitTimerIds: {},
     subSegCardInternalChangeGuards: {},
     subSegCardBubbleTargetIndexByKey: {},
+    subSegCardSpanTargetIndexByKey: {},
     subSegCardFocusTransferStackByKey: {},
     subSegCardDeleteDialogKey: null,
     subSegValueNodeIdCounter: 0,
@@ -337,6 +350,139 @@
     }
     const stamp = new Date().toISOString();
     console.log("[audioTest][" + stamp + "][subseg] " + label + " " + formatDebugDetail(detail), detail || {});
+  }
+
+  function buildSubSegRichEditorLogDetail(ctx) {
+    const { data = {} } = ctx || {};
+    const inputEl = data.inputEl || null;
+    const key = String(
+      data.key != null
+        ? data.key
+        : inputEl && inputEl.dataset && inputEl.dataset.subSegValueKey
+          ? inputEl.dataset.subSegValueKey
+          : ""
+    );
+    const pathKey = String(
+      data.pathKey != null
+        ? data.pathKey
+        : inputEl && inputEl.dataset && inputEl.dataset.subSegValuePath
+          ? inputEl.dataset.subSegValuePath
+          : ""
+    );
+    const stateKey = key ? getSubSegCardRecallStateKey(key, pathKey) : "";
+    const inputRole = String(data.inputRole || (inputEl === subSegValueInput ? "starter" : inputEl && inputEl.classList && inputEl.classList.contains("subseg-value-comment-bubble") ? "comment" : "card"));
+    const html = String(
+      data.html != null
+        ? data.html
+        : inputEl && typeof inputEl.innerHTML === "string"
+          ? inputEl.innerHTML
+          : ""
+    );
+    const text = String(
+      data.text != null
+        ? data.text
+        : inputEl
+          ? getContentEditableDisplayText(inputEl, html)
+          : htmlToPlainText(html)
+    ).trim();
+    const selectionText = String(data.selectionText != null ? data.selectionText : "");
+    const selectionHtml = String(data.selectionHtml != null ? data.selectionHtml : "");
+    const selectionOffsets = data.selectionOffsets || null;
+    const previousHtml = String(data.previousHtml != null ? data.previousHtml : "");
+    const previousText = String(data.previousText != null ? data.previousText : "");
+    const nextHtml = String(data.nextHtml != null ? data.nextHtml : "");
+    const nextText = String(data.nextText != null ? data.nextText : "");
+    const inputType = String(data.inputType != null ? data.inputType : "");
+    const reason = String(data.reason != null ? data.reason : "");
+    const entry = data.entry || getSubSegValueEntry(key, pathKey) || null;
+    const commentEntry = data.commentEntry || getSubSegCommentBubbleEntry(key, pathKey) || null;
+    const entrySnapshot = entry ? {
+      value: String(entry.value || ""),
+      html: String(entry.html || ""),
+      commentHtml: String(entry.commentHtml || ""),
+      createdAt: String(entry.createdAt || ""),
+      anchorStart: Number.isFinite(Number(entry.anchorStart)) ? Math.floor(Number(entry.anchorStart)) : null,
+      anchorEnd: Number.isFinite(Number(entry.anchorEnd)) ? Math.floor(Number(entry.anchorEnd)) : null,
+      isStarter: Boolean(entry.isStarter),
+      isSeedOrigin: Boolean(entry.isSeedOrigin),
+      childCount: Array.isArray(entry.children) ? entry.children.length : 0
+    } : null;
+    const commentSnapshot = commentEntry ? {
+      commentHtml: String(commentEntry.commentHtml || ""),
+      commentValue: String(commentEntry.commentValue || ""),
+      commentUpdatedAt: String(commentEntry.commentUpdatedAt || "")
+    } : null;
+    const rawSpanGroups = inputEl && inputEl.querySelectorAll ? getSubSegRichEditorSpanGroups(inputEl) : [];
+    const spanTargetIndex = inputEl ? getSubSegRichEditorSpanTargetIndex(inputEl, rawSpanGroups) : -1;
+    const spanGroups = rawSpanGroups.map(function (group, index) {
+        const spans = Array.isArray(group && group.spans) ? group.spans : [];
+        return {
+          index,
+          groupId: String(group && group.groupId ? group.groupId : ""),
+          isTarget: index === spanTargetIndex,
+          spanCount: spans.length,
+          text: spans.map(function (span) { return String(span && span.textContent ? span.textContent : ""); }).join(""),
+          html: spans.map(function (span) { return String(span && span.outerHTML ? span.outerHTML : ""); }).join(""),
+          spans: spans.map(function (span, spanIndex) {
+            return {
+              index: spanIndex,
+              text: String(span && span.textContent ? span.textContent : ""),
+              html: String(span && span.outerHTML ? span.outerHTML : ""),
+              className: String(span && span.className ? span.className : ""),
+              target: Boolean(span && span.classList && span.classList.contains("is-span-target"))
+            };
+          })
+        };
+      });
+    const visibleChildren = entry && inputEl && (inputEl === subSegValueInput || inputEl.classList && inputEl.classList.contains("subseg-value-card-input"))
+      ? getSubSegCardVisibleChildren({
+        data: {
+          entry,
+          path: getSubSegValuePathArray(pathKey),
+          displayedValue: getContentEditableDisplayText(inputEl, html),
+          sortedChildren: getSortedChildEntries(entry.children || [])
+        },
+        deps: {}
+      })
+      : [];
+    return {
+      inputRole,
+      key,
+      pathKey,
+      stateKey,
+      html,
+      htmlLength: html.length,
+      text,
+      textLength: text.length,
+      previousHtml,
+      previousText,
+      nextHtml,
+      nextText,
+      inputType,
+      reason,
+      selectionText,
+      selectionHtml,
+      selectionOffsets,
+      spanTargetIndex,
+      spanGroupCount: spanGroups.length,
+      spanGroups,
+      entrySnapshot,
+      commentSnapshot,
+      visibleChildrenCount: visibleChildren.length,
+      visibleChildren: visibleChildren.map(function (item) {
+        return {
+          order: Number.isFinite(Number(item && item.order)) ? Number(item.order) : 0,
+          value: String(item && item.value ? item.value : ""),
+          pathKey: String(item && item.childPathKey ? item.childPathKey : ""),
+          text: String(item && item.selectedText ? item.selectedText : ""),
+          start: Number.isFinite(Number(item && item.resolvedSelection && item.resolvedSelection.start)) ? Number(item.resolvedSelection.start) : null,
+          end: Number.isFinite(Number(item && item.resolvedSelection && item.resolvedSelection.end)) ? Number(item.resolvedSelection.end) : null
+        };
+      }),
+      bubbleTargetIndex: Number.isFinite(Number(data.bubbleTargetIndex)) ? Math.floor(Number(data.bubbleTargetIndex)) : null,
+      spanTargetVisualIndex: Number.isFinite(Number(data.spanTargetVisualIndex)) ? Math.floor(Number(data.spanTargetVisualIndex)) : null,
+      focusTransferDepth: Number.isFinite(Number(data.focusTransferDepth)) ? Math.floor(Number(data.focusTransferDepth)) : null
+    };
   }
 
   function formatDebugDetail(detail) {
@@ -422,7 +568,15 @@
     });
   }
   if (logoutButton) {
-    logoutButton.addEventListener("click", handleLogoutClick);
+    logoutButton.addEventListener("click", handleLogoutActivate);
+    logoutButton.addEventListener("pointerdown", handleLogoutActivate);
+    logoutButton.addEventListener("keydown", function (event) {
+      const keyCode = String(event && event.code ? event.code : "");
+      const keyValue = String(event && event.key ? event.key : "");
+      if (keyCode === "Enter" || keyCode === "Space" || keyValue === "Enter" || keyValue === " " || keyValue === "Spacebar") {
+        handleLogoutActivate(event);
+      }
+    });
   }
   uploadButton.addEventListener("click", openFilePicker);
   backButton.addEventListener("click", goBackToLibrary);
@@ -440,6 +594,9 @@
     guideButtonPlayer.addEventListener("click", function () {
       startGuideMode({ deps: {} });
     });
+  }
+  if (clearSubSegsButton) {
+    clearSubSegsButton.addEventListener("click", handleClearTargetSubSegsClick);
   }
   if (guideCloseButton) {
     guideCloseButton.addEventListener("click", function () {
@@ -532,6 +689,10 @@
       persistIdleAutoLogoutPreference(idleAutoLogoutEnabled);
       scheduleAuthActivityTimers();
       renderGuideFeatureBadge();
+      const live = await ensureLiveAuthSession();
+      if (!live) {
+        return;
+      }
       setLoginStatus("Welcome back, " + restored.username + ".");
       showLibraryView();
       await loadPersistedAudioCards();
@@ -623,20 +784,35 @@
     input.click();
   }
 
-  function handleLogoutClick() {
-    if (state.isPersisting) {
-      return;
+  function handleLogoutActivate(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
     logRuntimeAction("auth:logout-click", {
       authUser: state.authUser,
-      workspacePhase: state.workspacePhase
+      workspacePhase: state.workspacePhase,
+      isPersisting: state.isPersisting
     });
     clearLoginState("Logged out.");
+    window.setTimeout(function () {
+      try {
+        window.location.reload();
+      } catch {
+        // Ignore reload failures; the cleared state still leaves the app at login.
+      }
+    }, 0);
   }
 
   async function handleFileChange(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) {
+      return;
+    }
+    const isLiveSession = await ensureLiveAuthSession();
+    if (!isLiveSession) {
+      setLoginStatus("Log in again before uploading audio.", true);
+      showLoginView();
       return;
     }
     logRuntimeAction("audio:file-change", {
@@ -682,6 +858,16 @@
     }
     const keyCode = String(event.code || "");
     const keyValue = String(event.key || "");
+    const activeElement = document.activeElement;
+    const isTextEntryFocused = Boolean(
+      activeElement &&
+      (
+        activeElement.tagName === "INPUT" ||
+        activeElement.tagName === "TEXTAREA" ||
+        activeElement.tagName === "SELECT" ||
+        Boolean(activeElement.isContentEditable)
+      )
+    );
     if (keyCode === "Tab" || keyValue === "Tab") {
       if (isTextEntryFocused) {
         return;
@@ -700,7 +886,6 @@
     const isEnterKey = keyCode === "Enter" || keyValue === "Enter";
     const isEscapeKey = keyCode === "Escape" || keyValue === "Escape" || keyValue === "Esc";
     const isShiftKey = keyCode === "ShiftLeft" || keyCode === "ShiftRight" || keyValue === "Shift";
-    const activeElement = document.activeElement;
     const isSubSegInputFocused = activeElement === subSegValueInput;
     const isSubSegCardInputFocused = Boolean(
       activeElement &&
@@ -725,15 +910,6 @@
       activeElement &&
       activeElement.classList &&
       activeElement.classList.contains("subseg-value-comment-bubble")
-    );
-    const isTextEntryFocused = Boolean(
-      activeElement &&
-      (
-        activeElement.tagName === "INPUT" ||
-        activeElement.tagName === "TEXTAREA" ||
-        activeElement.tagName === "SELECT" ||
-        Boolean(activeElement.isContentEditable)
-      )
     );
     debugLog("keydown", {
       code: keyCode,
@@ -811,6 +987,18 @@
           delta = Math.max(1, cols);
         }
         moveModuleSelection(delta);
+        return;
+      }
+      if (state.workspacePhase === "dashboard" && (event.ctrlKey || event.metaKey) && isBackspaceKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        handleLogoutActivate(event);
+        return;
+      }
+      if (state.workspacePhase === "ingest" && (event.ctrlKey || event.metaKey) && isBackspaceKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        showLibraryView();
         return;
       }
       if (state.workspacePhase === "ingest" && (event.ctrlKey || event.metaKey) && (isArrowUp || isArrowDown)) {
@@ -1365,7 +1553,7 @@
     }
     closeSettingsPopover();
     if (uploadButton) {
-      uploadButton.classList.add("hidden");
+      uploadButton.classList.remove("hidden");
     }
     playerView.classList.add("hidden");
     setPlayerLoading(false);
@@ -4034,13 +4222,16 @@
   function resetPlaybackState() {
     clearCheckpointDragState();
     state.checkpoints = [];
-    state.subSegs = normalizeSubSegs(savedPlayback.subSegs);
+    state.subSegs = [];
+    state.targetSubSegs = [];
+    state.selectedTargetSubSegIndex = -1;
     state.subSegValueEntries = {};
     state.subSegDraftHtmlByKey = {};
     state.audSegNoteEntries = {};
     state.audSegNoteEditorVisible = false;
     state.subSegCardInternalChangeGuards = {};
     state.subSegCardBubbleTargetIndexByKey = {};
+    state.subSegCardSpanTargetIndexByKey = {};
     state.subSegCardFocusTransferStackByKey = {};
     state.subSegCardDeleteDialogKey = null;
     state.activeSubSegValueKey = null;
@@ -4084,12 +4275,10 @@
     if (spanCount <= 0) {
       return;
     }
-
-    if (state.selectedSpanIndex < 0 || state.selectedSpanIndex >= spanCount) {
-      state.selectedSpanIndex = step > 0 ? 0 : spanCount - 1;
-    } else {
-      state.selectedSpanIndex = (state.selectedSpanIndex + step + spanCount) % spanCount;
-    }
+    const slotCount = spanCount + 1;
+    const currentSlot = state.selectedSpanIndex < 0 ? 0 : Math.min(spanCount, state.selectedSpanIndex + 1);
+    const nextSlot = (currentSlot + step + slotCount) % slotCount;
+    state.selectedSpanIndex = nextSlot === 0 ? -1 : nextSlot - 1;
 
     snapToSelectedSpanStart();
     updateUi();
@@ -4195,12 +4384,11 @@
       selectedTargetSubSegIndex: state.selectedTargetSubSegIndex,
       total
     });
-    if (state.selectedTargetSubSegIndex < 0 || state.selectedTargetSubSegIndex >= total) {
-      state.selectedTargetSubSegIndex = step > 0 ? 0 : total - 1;
-    } else {
-      state.selectedTargetSubSegIndex = (state.selectedTargetSubSegIndex + step + total) % total;
-    }
-    const selected = state.targetSubSegs[state.selectedTargetSubSegIndex];
+    const slotCount = total + 1;
+    const currentSlot = state.selectedTargetSubSegIndex < 0 ? 0 : Math.min(total, state.selectedTargetSubSegIndex + 1);
+    const nextSlot = (currentSlot + step + slotCount) % slotCount;
+    state.selectedTargetSubSegIndex = nextSlot === 0 ? -1 : nextSlot - 1;
+    const selected = state.selectedTargetSubSegIndex >= 0 ? state.targetSubSegs[state.selectedTargetSubSegIndex] : null;
     if (selected) {
       audio.currentTime = selected.start;
       state.audSegNoteEditorVisible = true;
@@ -4210,6 +4398,9 @@
         "audSeg subSeg " + String(state.selectedTargetSubSegIndex + 1) + "/" + String(total) +
         ": " + formatTime(selected.start) + " -> " + formatTime(selected.end)
       );
+    } else {
+      renderAudSegNotePanel();
+      setSaveStatus("audSeg subSeg selection cleared");
     }
     updateUi();
     debugLog("target:cycleSubSeg", {
@@ -4507,7 +4698,13 @@
       return;
     }
     state.activeSubSegValueKey = key;
+    clearSubSegRichEditorSpanTargetIndexForKey(key);
+    clearSubSegCardBubbleTargetsForKey(key);
     clearSubSegCardFocusTransferStack(key);
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (selection) {
+      selection.removeAllRanges();
+    }
     ensureSubSegTimeline(key);
     resetSubSegTimelineUiState();
     const starterEntry = ensureStarterSubSegValueEntry(key);
@@ -4543,6 +4740,7 @@
         activeSubSegValueKey: state.activeSubSegValueKey,
         currentKey
       });
+      clearSubSegRichEditorSpanTargetIndexForKey(state.activeSubSegValueKey);
       clearSubSegCardFocusTransferStack(state.activeSubSegValueKey);
       state.activeSubSegValueKey = null;
       resetSubSegTimelineUiState();
@@ -4585,16 +4783,152 @@
     if (!String(selectionText || "").trim()) {
       return false;
     }
+    const selectionOffsets = getContentEditableSelectionOffsets(inputEl, selectionState.range);
+    const leadingWhitespaceMatch = selectionText.match(/^\s*/);
+    const trailingWhitespaceMatch = selectionText.match(/\s*$/);
+    const leadingWhitespaceLength = leadingWhitespaceMatch ? leadingWhitespaceMatch[0].length : 0;
+    const trailingWhitespaceLength = trailingWhitespaceMatch ? trailingWhitespaceMatch[0].length : 0;
+    const trimmedStart = selectionOffsets ? selectionOffsets.start + leadingWhitespaceLength : null;
+    const trimmedEnd = selectionOffsets ? selectionOffsets.end - trailingWhitespaceLength : null;
+    const trimmedRange = trimmedStart != null && trimmedEnd != null && trimmedEnd > trimmedStart
+      ? getContentEditableRangeFromOffsets(inputEl, { start: trimmedStart, end: trimmedEnd })
+      : null;
+    if (!trimmedRange) {
+      return false;
+    }
     const marker = document.createElement("span");
     marker.className = String(className || "subseg-inline-highlight");
-    marker.appendChild(selectionState.range.extractContents());
-    selectionState.range.insertNode(marker);
+    marker.appendChild(trimmedRange.extractContents());
+    trimmedRange.insertNode(marker);
 
     const nextRange = document.createRange();
     nextRange.setStartAfter(marker);
     nextRange.collapse(true);
     selectionState.selection.removeAllRanges();
     selectionState.selection.addRange(nextRange);
+    return marker;
+  }
+
+  function pruneSubSegRichEditorHighlightSpans(root, preserveGroupId) {
+    if (!root || !root.querySelectorAll) {
+      return false;
+    }
+    let changed = false;
+    const emptySpans = Array.from(root.querySelectorAll(".subseg-inline-highlight")).filter(function (span) {
+      return span && !String(span.textContent || "").trim();
+    });
+    emptySpans.forEach(function (span) {
+      if (span && span.parentNode) {
+        span.parentNode.removeChild(span);
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  function getContentEditableRangeFromOffsets(root, offsets) {
+    if (!root || !offsets || !Number.isFinite(offsets.start) || !Number.isFinite(offsets.end) || !document.createRange) {
+      return null;
+    }
+    const start = Math.max(0, Math.floor(offsets.start));
+    const end = Math.max(start, Math.floor(offsets.end));
+    function locateOffset(targetOffset) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let remaining = targetOffset;
+      let node = walker.nextNode();
+      let lastNode = null;
+      while (node) {
+        const textLength = String(node.nodeValue || "").length;
+        lastNode = node;
+        if (remaining <= textLength) {
+          return { node, offset: remaining };
+        }
+        remaining -= textLength;
+        node = walker.nextNode();
+      }
+      if (lastNode) {
+        return { node: lastNode, offset: String(lastNode.nodeValue || "").length };
+      }
+      return null;
+    }
+    const startPos = locateOffset(start);
+    const endPos = locateOffset(end);
+    if (!startPos || !endPos) {
+      return null;
+    }
+    try {
+      const range = document.createRange();
+      range.setStart(startPos.node, Math.min(startPos.offset, String(startPos.node.nodeValue || "").length));
+      range.setEnd(endPos.node, Math.min(endPos.offset, String(endPos.node.nodeValue || "").length));
+      return range;
+    } catch {
+      return null;
+    }
+  }
+
+  function markSubSegRichEditorSelection(inputEl) {
+    const selectionState = getSubSegRichEditorSelectionState(inputEl);
+    if (!selectionState) {
+      return false;
+    }
+    const groups = getSubSegRichEditorSpanGroups(inputEl);
+    const storedTargetIndex = getSubSegRichEditorStoredSpanTargetIndex(inputEl, groups.length);
+    const targetGroup = storedTargetIndex >= 0 ? groups[storedTargetIndex] : null;
+    const targetSpan = targetGroup && Array.isArray(targetGroup.spans) && targetGroup.spans.length > 0
+      ? targetGroup.spans[targetGroup.spans.length - 1]
+      : null;
+    const targetGroupId = targetSpan ? ensureSubSegRichEditorSpanGroupId(targetSpan) : "";
+    const selectionText = String(selectionState.selection.toString() || "");
+    if (!String(selectionText || "").trim()) {
+      return false;
+    }
+    const selectionHtml = getContentEditableSelectionHtml(selectionState.range);
+    const wrapClassName = storedTargetIndex >= 0
+      ? "subseg-inline-highlight subseg-inline-highlight-linked"
+      : "subseg-inline-highlight";
+    const marker = wrapSubSegRichEditorSelectionWithSpan(inputEl, wrapClassName);
+    if (!marker) {
+      return false;
+    }
+    if (storedTargetIndex >= 0) {
+      if (targetGroupId) {
+        setSubSegRichEditorSpanGroupId(marker, targetGroupId);
+      }
+      clearSubSegRichEditorSpanGroupIdsInDescendants(targetSpan);
+      clearSubSegRichEditorSpanGroupIdsInDescendants(marker);
+      applySubSegRichEditorSpanBridge(inputEl, targetSpan, marker);
+      pruneSubSegRichEditorHighlightSpans(inputEl, targetGroupId);
+      const nextTargetIndex = findSubSegRichEditorSpanGroupIndexById(inputEl, targetGroupId);
+      setSubSegRichEditorSpanTargetVisuals(inputEl, nextTargetIndex);
+    }
+    const key = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : "");
+    const pathKey = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : "");
+    const isStarterInput = inputEl === subSegValueInput;
+    logRuntimeAction(isStarterInput ? "subseg-draft:mark-selection" : "subseg-card:mark-selection", buildSubSegRichEditorLogDetail({
+      data: {
+        inputEl,
+        inputRole: isStarterInput ? "starter" : "card",
+        key,
+        pathKey,
+        selectionText,
+        selectionHtml,
+        storedTargetIndex,
+        reason: isStarterInput ? "draft-mark-selection" : "card-mark-selection"
+      },
+      deps: {}
+    }));
+    if (isStarterInput) {
+      const derivedChanged = handleSubSegDraftInput();
+      if (derivedChanged) {
+        renderSubSegValuePanel();
+      }
+      enqueueAutoSave();
+      return true;
+    }
+    const cardDerivedChanged = handleSubSegCardInputLive({ target: inputEl });
+    if (cardDerivedChanged) {
+      renderSubSegValuePanel();
+    }
     return true;
   }
 
@@ -4606,26 +4940,28 @@
     const keyCode = String(event && event.code ? event.code : "");
     const keyValue = String(event && event.key ? event.key : "");
     const isEnter = keyCode === "Enter" || keyValue === "Enter";
-    if (!isEnter || !subSegValueInput || event.currentTarget !== subSegValueInput) {
+    const isArrowRight = keyCode === "ArrowRight" || keyValue === "ArrowRight" || keyValue === "Right";
+    const isArrowLeft = keyCode === "ArrowLeft" || keyValue === "ArrowLeft" || keyValue === "Left";
+    const isCtrl = Boolean(event.ctrlKey || event.metaKey);
+    const isShift = Boolean(event.shiftKey);
+    if (!subSegValueInput || event.currentTarget !== subSegValueInput) {
       return;
     }
-    const selectionState = getSubSegRichEditorSelectionState(subSegValueInput);
-    if (!selectionState) {
+    if (isCtrl && !isShift && (isArrowLeft || isArrowRight)) {
+      if (cycleSubSegRichEditorSpanSelection(subSegValueInput, isArrowRight ? 1 : -1)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+    }
+    if (!isEnter) {
       return;
     }
-    const selectionText = String(selectionState.selection.toString() || "");
+    if (!markSubSegRichEditorSelection(subSegValueInput)) {
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
-    if (!wrapSubSegRichEditorSelectionWithSpan(subSegValueInput, "subseg-inline-highlight")) {
-      return;
-    }
-    logRuntimeAction("subseg-draft:mark-selection", {
-      key: String(state.activeSubSegValueKey || ""),
-      selectionText,
-      selectionHtml: getContentEditableSelectionHtml(selectionState.range)
-    });
-    handleSubSegDraftInput();
-    enqueueAutoSave();
   }
 
   function handleSubSegRichEditorBeforeInput(event) {
@@ -4643,22 +4979,79 @@
       inputHtml: String(inputEl && inputEl.innerHTML ? inputEl.innerHTML : ""),
       inputText: getContentEditableDisplayText(inputEl)
     });
-    if (inputEl === subSegValueInput && inputType === "insertParagraph") {
-      const selectionText = String(selection && selection.rangeCount > 0 ? selection.toString() || "" : "");
-      if (wrapSubSegRichEditorSelectionWithSpan(inputEl, "subseg-inline-highlight")) {
+    if (
+      inputEl &&
+      (
+        inputEl === subSegValueInput ||
+        (inputEl.classList && (
+          inputEl.classList.contains("subseg-value-card-input") ||
+          inputEl.classList.contains("subseg-value-comment-bubble")
+        ))
+      )
+    ) {
+      logRuntimeAction("subseg-rich-input:beforeinput", buildSubSegRichEditorLogDetail({
+        data: {
+          inputEl,
+          inputRole: inputEl === subSegValueInput
+            ? "starter"
+            : inputEl.classList && inputEl.classList.contains("subseg-value-comment-bubble")
+              ? "comment"
+              : "card",
+          inputType,
+          selectionText: selection && selection.rangeCount > 0 ? String(selection.toString() || "") : "",
+          selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : "",
+          selectionOffsets: inputEl && selectionRange ? getContentEditableSelectionOffsets(inputEl, selectionRange) : null,
+          html: String(inputEl && inputEl.innerHTML ? inputEl.innerHTML : ""),
+          text: getContentEditableDisplayText(inputEl),
+          reason: "beforeinput"
+        },
+        deps: {}
+      }));
+    }
+    if (
+      inputEl &&
+      inputEl.isContentEditable &&
+      selectionRange &&
+      selectionRange.collapsed &&
+      (
+        inputType === "insertText" ||
+        inputType === "insertCompositionText" ||
+        inputType === "insertFromPaste"
+      )
+    ) {
+      const currentOffsets = getSubSegRichEditorSelectionOffsetInfo(inputEl, selectionRange);
+      const groups = getSubSegRichEditorSpanGroups(inputEl);
+      const targetIndex = getSubSegRichEditorSpanTargetIndex(inputEl, groups);
+      const targetGroup = targetIndex >= 0 ? groups[targetIndex] : null;
+      const targetSpan = targetGroup && Array.isArray(targetGroup.spans) && targetGroup.spans.length > 0
+        ? targetGroup.spans[targetGroup.spans.length - 1]
+        : null;
+      const activeSpan = getSubSegRichEditorSpanAncestor(inputEl, selectionRange.startContainer);
+      if (targetSpan && currentOffsets) {
+        const targetOffsets = getSubSegRichEditorSpanOffsetInfo(inputEl, targetSpan);
+        if (targetOffsets) {
+          const isOnTargetBoundary = currentOffsets.start === targetOffsets.start || currentOffsets.start === targetOffsets.end;
+          const isInsideTarget = currentOffsets.start > targetOffsets.start && currentOffsets.start < targetOffsets.end;
+          if (activeSpan === targetSpan || isInsideTarget) {
+            return;
+          }
+          if (isOnTargetBoundary) {
+            setSubSegRichEditorCollapsedCaret(inputEl, targetSpan, currentOffsets.start === targetOffsets.end);
+          } else if (activeSpan && activeSpan.classList && activeSpan.classList.contains("subseg-inline-highlight")) {
+            setSubSegRichEditorCaretAfterNode(inputEl, activeSpan);
+          }
+        } else if (activeSpan && activeSpan.classList && activeSpan.classList.contains("subseg-inline-highlight") && activeSpan !== targetSpan) {
+          setSubSegRichEditorCaretAfterNode(inputEl, activeSpan);
+        }
+      } else if (activeSpan && activeSpan.classList && activeSpan.classList.contains("subseg-inline-highlight")) {
+        setSubSegRichEditorCaretAfterNode(inputEl, activeSpan);
+      }
+    }
+    if ((inputType === "insertParagraph" || inputType === "insertLineBreak") && inputEl && inputEl.isContentEditable) {
+      if (markSubSegRichEditorSelection(inputEl)) {
         event.preventDefault();
         event.stopPropagation();
-        logRuntimeAction("subseg-draft:mark-selection", {
-          key: String(state.activeSubSegValueKey || ""),
-          selectionText,
-          selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : ""
-        });
-        handleSubSegDraftInput();
-        enqueueAutoSave();
       }
-      return;
-    }
-    if (inputType === "insertParagraph") {
       return;
     }
     if (inputType !== "deleteWordBackward") {
@@ -4672,20 +5065,37 @@
   function handleSubSegDraftInput() {
     const key = state.activeSubSegValueKey;
     if (!key || !subSegValueInput) {
-      return;
+      return false;
     }
-    const html = String(subSegValueInput.innerHTML || "");
+    const html = normalizeSubSegRichEditorHighlightWhitespaceHtml(String(subSegValueInput.innerHTML || ""), getSubSegRichEditorPreserveGroupId(subSegValueInput));
+    if (subSegValueInput.innerHTML !== html) {
+      subSegValueInput.innerHTML = html;
+    }
     const text = String(subSegValueInput.textContent || "").trim();
-    logRuntimeAction("subseg-draft:input", {
-      key,
-      html,
-      text
-    });
+    logRuntimeAction("subseg-draft:input", buildSubSegRichEditorLogDetail({
+      data: {
+        inputEl: subSegValueInput,
+        inputRole: "starter",
+        key,
+        html,
+        text,
+        selectionText: String(window.getSelection ? window.getSelection().toString() || "" : ""),
+        selectionHtml: window.getSelection && window.getSelection().rangeCount > 0
+          ? getContentEditableSelectionHtml(window.getSelection().getRangeAt(0))
+          : "",
+        selectionOffsets: window.getSelection && window.getSelection().rangeCount > 0
+          ? getContentEditableSelectionOffsets(subSegValueInput, window.getSelection().getRangeAt(0))
+          : null,
+        reason: "draft-input"
+      },
+      deps: {}
+    }));
     if (text) {
       state.subSegDraftHtmlByKey[key] = html;
     } else {
       delete state.subSegDraftHtmlByKey[key];
     }
+    return false;
   }
 
   function commitSubSegDraftValue() {
@@ -4693,7 +5103,10 @@
     if (!key || !subSegValueInput) {
       return;
     }
-    const html = String(subSegValueInput.innerHTML || "");
+    const html = normalizeSubSegRichEditorHighlightWhitespaceHtml(String(subSegValueInput.innerHTML || ""), getSubSegRichEditorPreserveGroupId(subSegValueInput));
+    if (subSegValueInput.innerHTML !== html) {
+      subSegValueInput.innerHTML = html;
+    }
     const text = String(subSegValueInput.textContent || "").trim();
     const starterEntry = ensureStarterSubSegValueEntry(key);
     if (!starterEntry || (!text && !String(html).trim())) {
@@ -4701,13 +5114,22 @@
     }
     const createdAt = new Date().toISOString();
     const value = text || htmlToPlainText(html).trim();
-    logRuntimeAction("subseg-draft:commit", {
-      key,
-      createdAt,
-      value,
-      html,
-      text
+    const draftCommitDetail = buildSubSegRichEditorLogDetail({
+      data: {
+        inputEl: subSegValueInput,
+        inputRole: "starter",
+        key,
+        html,
+        text,
+        createdAt,
+        value,
+        reason: "draft-commit"
+      },
+      deps: {}
     });
+    draftCommitDetail.createdAt = createdAt;
+    draftCommitDetail.value = value;
+    logRuntimeAction("subseg-draft:commit", draftCommitDetail);
     starterEntry.html = html;
     starterEntry.value = value;
     starterEntry.createdAt = createdAt;
@@ -4934,27 +5356,115 @@
     return html;
   }
 
-  function buildSubSegInlineBoldHtml(text, ranges) {
-    return buildSubSegInlineTaggedHtml(text, ranges, "strong", "");
+  function hasSubSegInlineHighlightMarkup(html) {
+    return /<span\b[^>]*class=(["'])[^"']*\bsubseg-inline-highlight\b/i.test(String(html || ""));
   }
 
-  function getSubSegCardHighlightRanges(visibleChildren) {
-    return Array.isArray(visibleChildren)
-      ? visibleChildren
-        .map(function (item) {
-          return item && item.resolvedSelection
-            ? {
-              start: item.resolvedSelection.start,
-              end: item.resolvedSelection.end,
-              pathKey: String(item.childPathKey || "")
-            }
-            : null;
-        })
-        .filter(Boolean)
-      : [];
+  function normalizeSubSegRichEditorHighlightWhitespaceHtml(html, preserveGroupId) {
+    const source = String(html || "");
+    if (!source || !hasSubSegInlineHighlightMarkup(source)) {
+      return source;
+    }
+    const probe = document.createElement("div");
+    probe.innerHTML = source;
+    normalizeSubSegRichEditorHighlightWhitespaceRoot(probe, preserveGroupId);
+    return String(probe.innerHTML || "");
   }
 
-  function getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex) {
+  function normalizeSubSegRichEditorHighlightWhitespaceRoot(root, preserveGroupId) {
+    if (!root || !root.querySelectorAll) {
+      return false;
+    }
+    let changed = false;
+    const spans = Array.from(root.querySelectorAll(".subseg-inline-highlight"));
+    spans.forEach(function (span) {
+      if (!span || !span.parentNode) {
+        return;
+      }
+      const spanGroupId = getSubSegRichEditorSpanGroupId(span);
+      if (preserveGroupId && spanGroupId && String(spanGroupId) === String(preserveGroupId)) {
+        return;
+      }
+      let leading = "";
+      while (span.firstChild && span.firstChild.nodeType === Node.TEXT_NODE) {
+        const text = String(span.firstChild.nodeValue || "");
+        const match = text.match(/^\s+/);
+        if (!match) {
+          break;
+        }
+        leading += match[0];
+        const remainder = text.slice(match[0].length);
+        if (remainder) {
+          span.firstChild.nodeValue = remainder;
+          break;
+        }
+        span.removeChild(span.firstChild);
+      }
+      if (leading) {
+        span.parentNode.insertBefore(document.createTextNode(leading), span);
+        changed = true;
+      }
+
+      let trailing = "";
+      while (span.lastChild && span.lastChild.nodeType === Node.TEXT_NODE) {
+        const text = String(span.lastChild.nodeValue || "");
+        const match = text.match(/\s+$/);
+        if (!match) {
+          break;
+        }
+        trailing = match[0] + trailing;
+        const remainder = text.slice(0, text.length - match[0].length);
+        if (remainder) {
+          span.lastChild.nodeValue = remainder;
+          break;
+        }
+        span.removeChild(span.lastChild);
+      }
+      if (trailing) {
+        span.parentNode.insertBefore(document.createTextNode(trailing), span.nextSibling);
+        changed = true;
+      }
+
+      if (!String(span.textContent || "").length) {
+        span.parentNode.removeChild(span);
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  function getSubSegRichEditorPreserveGroupId(inputEl, htmlFallback) {
+    if (!inputEl) {
+      return "";
+    }
+    const sourceHtml = String(htmlFallback != null ? htmlFallback : inputEl.innerHTML || "");
+    if (!sourceHtml || !hasSubSegInlineHighlightMarkup(sourceHtml)) {
+      return "";
+    }
+    const probe = document.createElement("div");
+    if (inputEl.dataset) {
+      probe.dataset.subSegValueKey = String(inputEl.dataset.subSegValueKey || "");
+      probe.dataset.subSegValuePath = String(inputEl.dataset.subSegValuePath || "");
+    }
+    probe.innerHTML = sourceHtml;
+    const groups = getSubSegRichEditorSpanGroups(probe);
+    const targetIndex = getSubSegRichEditorSpanTargetIndex(probe, groups);
+    const targetGroup = targetIndex >= 0 ? groups[targetIndex] : null;
+    const targetSpan = targetGroup && Array.isArray(targetGroup.spans) && targetGroup.spans.length > 0
+      ? targetGroup.spans[targetGroup.spans.length - 1]
+      : null;
+    return targetSpan ? ensureSubSegRichEditorSpanGroupId(targetSpan) : "";
+  }
+
+  function getSubSegRichEditorPreserveGroupIdForState(key, pathKey, htmlFallback) {
+    const probe = document.createElement("div");
+    probe.dataset.subSegValueKey = String(key || "");
+    probe.dataset.subSegValuePath = String(pathKey || "");
+    probe.innerHTML = String(htmlFallback || "");
+    return getSubSegRichEditorPreserveGroupId(probe, htmlFallback);
+  }
+
+  function getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex, preserveGroupId) {
     const html = String(sourceHtml != null ? sourceHtml : getSubSegEntryHtml(entry) || "");
     const sourceText = getContentEditableDisplayText(null, html);
     const activeIndex = Number.isFinite(Number(activeBubbleIndex)) ? Math.floor(Number(activeBubbleIndex)) : -1;
@@ -4968,10 +5478,13 @@
     if (activeRange) {
       return buildSubSegInlineTaggedHtml(sourceText, activeRange, "span", "subseg-inline-highlight");
     }
+    if (hasSubSegInlineHighlightMarkup(sourceHtml)) {
+      return normalizeSubSegRichEditorHighlightWhitespaceHtml(sourceHtml, preserveGroupId) || String(sourceHtml || textToDisplayHtml(sourceText));
+    }
     if (!Array.isArray(visibleChildren) || visibleChildren.length === 0) {
       return String(sourceHtml || textToDisplayHtml(sourceText));
     }
-    return buildSubSegInlineBoldHtml(sourceText, getSubSegCardHighlightRanges(visibleChildren));
+    return String(sourceHtml || textToDisplayHtml(sourceText));
   }
 
   function getSubSegEntryHtml(entry) {
@@ -5015,6 +5528,9 @@
     const nextHtml = String(html || "");
     if (String(editor.innerHTML || "") !== nextHtml) {
       editor.innerHTML = nextHtml;
+    }
+    if (editor.classList && editor.classList.contains("subseg-value-card-input")) {
+      setSubSegRichEditorSpanTargetVisuals(editor, getSubSegRichEditorSpanTargetIndex(editor, getSubSegRichEditorSpanList(editor)));
     }
   }
 
@@ -5064,10 +5580,18 @@
       },
       deps: {}
     });
-    const nextHtml = getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
-    if (String(editor.innerHTML || "") !== String(nextHtml || "")) {
-      editor.innerHTML = nextHtml;
+    const nextHtml = getSubSegCardDisplayedHtml(
+      entry,
+      sourceHtml,
+      visibleChildren,
+      activeBubbleIndex,
+      getSubSegRichEditorPreserveGroupIdForState(key, pathKey, sourceHtml)
+    );
+    const renderedHtml = activeBubbleIndex >= 0 ? "" : nextHtml;
+    if (String(editor.innerHTML || "") !== String(renderedHtml || "")) {
+      editor.innerHTML = renderedHtml;
     }
+    setSubSegRichEditorSpanTargetVisuals(editor, getSubSegRichEditorSpanTargetIndex(editor, getSubSegRichEditorSpanList(editor)));
     return true;
   }
 
@@ -5100,7 +5624,7 @@
       let isTargetBubble = false;
       if (!pathKey) {
         if (starterEntry) {
-          const starterStateKey = getSubSegCardBubbleTargetStateKey(key, "");
+          const starterSpanTargetIndex = getSubSegRichEditorSpanTargetIndex(editor, getSubSegRichEditorSpanList(editor));
           const starterSourceHtml = String(state.subSegDraftHtmlByKey[key] || "") || getSubSegEntryHtml(starterEntry);
           const starterDisplayedValue = getContentEditableDisplayText(editor, starterSourceHtml);
           const starterVisibleChildren = getSubSegCardVisibleChildren({
@@ -5112,12 +5636,39 @@
             },
             deps: {}
           });
-          const activeBubbleIndex = getSubSegCardBubbleTargetIndex(starterStateKey, starterVisibleChildren.length);
-          nextHtml = getSubSegCardDisplayedHtml(starterEntry, starterSourceHtml, starterVisibleChildren, activeBubbleIndex);
+          const starterTargetOffsets = getSubSegRichEditorSpanTargetSelectionOffsets(editor);
+          const activeBubbleIndex = getSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, ""), starterVisibleChildren.length);
+          nextHtml = getSubSegCardDisplayedHtml(
+            starterEntry,
+            starterSourceHtml,
+            starterVisibleChildren,
+            activeBubbleIndex,
+            getSubSegRichEditorPreserveGroupIdForState(key, "", starterSourceHtml)
+          );
           isTargetBubble = activeBubbleIndex >= 0;
           if (String(starterEntry.html || "") !== String(nextHtml || "")) {
             starterEntry.html = String(nextHtml || "");
           }
+          const starterTargetChildren = starterTargetOffsets
+            ? starterVisibleChildren.filter(function (item) {
+              return item && item.resolvedSelection &&
+                Number(item.resolvedSelection.start) === Number(starterTargetOffsets.start) &&
+                Number(item.resolvedSelection.end) === Number(starterTargetOffsets.end);
+            })
+            : [];
+          starterTargetChildren.forEach(function (item, visibleIndex) {
+            renderSubSegValueCardNode(
+              key,
+              item.childEntry,
+              item.childPath,
+              1,
+              visibleIndex === (starterTargetChildren.length - 1),
+              [],
+              visibleIndex + 1,
+              visibleIndex < (starterTargetChildren.length - 1),
+              starterSpanTargetIndex >= 0
+            );
+          });
         }
       } else {
         const entry = getSubSegValueEntry(key, pathKey);
@@ -5137,23 +5688,74 @@
             deps: {}
           });
           const activeBubbleIndex = getSubSegCardBubbleTargetIndex(stateKey, visibleChildren.length);
-          nextHtml = getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
+          nextHtml = getSubSegCardDisplayedHtml(
+            entry,
+            sourceHtml,
+            visibleChildren,
+            activeBubbleIndex,
+            getSubSegRichEditorPreserveGroupIdForState(key, pathKey, sourceHtml)
+          );
           isTargetBubble = activeBubbleIndex >= 0;
           if (String(entry.html || "") !== String(nextHtml || "")) {
             entry.html = String(nextHtml || "");
           }
+          const targetOffsets = getSubSegRichEditorSpanTargetSelectionOffsets(editor);
+          const targetChildren = targetOffsets
+            ? visibleChildren.filter(function (item) {
+              return item && item.resolvedSelection &&
+                Number(item.resolvedSelection.start) === Number(targetOffsets.start) &&
+                Number(item.resolvedSelection.end) === Number(targetOffsets.end);
+            })
+            : [];
+          const renderChildren = targetOffsets ? targetChildren : [];
+          renderChildren.forEach(function (item, visibleIndex) {
+            const childHasFollowingBranch = Boolean((visibleIndex < (renderChildren.length - 1)) || hasFollowingBranch);
+            renderSubSegValueCardNode(
+              key,
+              item.childEntry,
+              item.childPath,
+              depth + 1,
+              visibleIndex === (renderChildren.length - 1),
+              nextAncestorGuideDepths,
+              visibleIndex + 1,
+              childHasFollowingBranch,
+              spanTargetIndex >= 0
+            );
+          });
         }
       }
+      setSubSegRichEditorSpanTargetVisuals(editor, getSubSegRichEditorSpanTargetIndex(editor, getSubSegRichEditorSpanList(editor)));
       if (card) {
         card.classList.toggle("is-target-bubble", isTargetBubble);
       }
-      if (String(editor.innerHTML || "") !== String(nextHtml || "")) {
-        editor.innerHTML = nextHtml;
+      const renderedHtml = isTargetBubble ? "" : nextHtml;
+      if (String(editor.innerHTML || "") !== String(renderedHtml || "")) {
+        editor.innerHTML = renderedHtml;
         changed = true;
       }
+      const spanTargetIndex = getSubSegRichEditorSpanTargetIndex(editor, getSubSegRichEditorSpanList(editor));
       if (selectionOffsets) {
         restoreContentEditableSelection(editor, selectionOffsets);
       }
+      const renderChildren = spanTargetIndex >= 0 ? visibleChildren.filter(function (item) {
+        return item && item.resolvedSelection &&
+          item.resolvedSelection.start === getSubSegRichEditorSpanTargetSelectionOffsets(editor).start &&
+          item.resolvedSelection.end === getSubSegRichEditorSpanTargetSelectionOffsets(editor).end;
+      }) : [];
+      renderChildren.forEach(function (item, visibleIndex) {
+        const childHasFollowingBranch = Boolean((visibleIndex < (renderChildren.length - 1)) || hasFollowingBranch);
+        renderSubSegValueCardNode(
+          key,
+          item.childEntry,
+          item.childPath,
+          depth + 1,
+          visibleIndex === (renderChildren.length - 1),
+          nextAncestorGuideDepths,
+          visibleIndex + 1,
+          childHasFollowingBranch,
+          spanTargetIndex >= 0
+        );
+      });
     });
     return changed;
   }
@@ -5213,7 +5815,13 @@
         },
         deps: {}
       });
-      const starterDisplayHtml = getSubSegCardDisplayedHtml(starterEntry, starterSourceHtml, starterVisibleChildren);
+      const starterDisplayHtml = getSubSegCardDisplayedHtml(
+        starterEntry,
+        starterSourceHtml,
+        starterVisibleChildren,
+        -1,
+        getSubSegRichEditorPreserveGroupIdForState(selectedKey, "", starterSourceHtml)
+      );
       const previousDraftKey = String(subSegValueInput.dataset.subSegDraftKey || "");
       subSegValueInput.dataset.subSegDraftKey = selectedKey;
       subSegValueInput.classList.remove("hidden");
@@ -5234,6 +5842,36 @@
       starterCard.appendChild(subSegValueInput);
       appendSubSegCommentBubble(starterCard, selectedKey, "", starterEntry);
       subSegValueList.appendChild(starterCard);
+      const starterChildren = Array.isArray(starterEntry.children) ? starterEntry.children : [];
+      if (starterChildren.length > 0) {
+        const starterBubbleStateKey = getSubSegCardBubbleTargetStateKey(selectedKey, "");
+        const starterVisibleChildren = getSubSegCardVisibleChildren({
+          data: {
+            entry: starterEntry,
+            path: [],
+            displayedValue: getContentEditableDisplayText(subSegValueInput, starterEntry.html || starterHtml),
+            sortedChildren: getSortedChildEntries(starterChildren)
+          },
+          deps: {}
+        });
+        const starterActiveBubbleIndex = getSubSegCardBubbleTargetIndex(starterBubbleStateKey, starterVisibleChildren.length);
+        const starterRenderChildren = starterActiveBubbleIndex >= 0 && starterVisibleChildren[starterActiveBubbleIndex]
+          ? [starterVisibleChildren[starterActiveBubbleIndex]]
+          : [];
+        starterRenderChildren.forEach(function (item, visibleIndex) {
+          renderSubSegValueCardNode(
+            selectedKey,
+            item.childEntry,
+            [0].concat(item.childPath || []),
+            1,
+            visibleIndex === (starterRenderChildren.length - 1),
+            [],
+            visibleIndex + 1,
+            visibleIndex < (starterRenderChildren.length - 1),
+            true
+          );
+        });
+      }
     } else if (subSegValueInput) {
       subSegValueInput.classList.add("hidden");
     }
@@ -5442,7 +6080,31 @@
         };
       })
     });
-    const hasFollowingContent = Boolean(Boolean(hasFollowingBranch) || visibleChildren.length > 0);
+    const displayedHtml = getSubSegCardDisplayedHtml(
+      entry,
+      sourceHtml,
+      visibleChildren,
+      activeBubbleIndex,
+      getSubSegRichEditorPreserveGroupIdForState(key, pathKey, sourceHtml)
+    );
+    if (String(entry.html || "") !== String(displayedHtml || "")) {
+      entry.html = String(displayedHtml || "");
+    }
+    const renderedHtml = Boolean(isBubbleTarget) ? "" : displayedHtml;
+    if (String(editor.innerHTML || "") !== String(renderedHtml || "")) {
+      editor.innerHTML = renderedHtml;
+    }
+    const targetOffsets = getSubSegRichEditorSpanTargetSelectionOffsets(editor);
+    const renderChildren = targetOffsets
+      ? visibleChildren.filter(function (item) {
+        return item && item.resolvedSelection &&
+          Number(item.resolvedSelection.start) === Number(targetOffsets.start) &&
+          Number(item.resolvedSelection.end) === Number(targetOffsets.end);
+      })
+      : (activeBubbleIndex >= 0 && visibleChildren[activeBubbleIndex]
+        ? [visibleChildren[activeBubbleIndex]]
+        : []);
+    const hasFollowingContent = Boolean(Boolean(hasFollowingBranch) || renderChildren.length > 0);
     card.dataset.subsegHasFollowingContent = hasFollowingContent ? "1" : "0";
     card.classList.toggle("has-following-content", hasFollowingContent);
     if (hasFollowingContent) {
@@ -5450,27 +6112,20 @@
       tail.className = "subseg-value-card-tail";
       card.appendChild(tail);
     }
-    const displayedHtml = getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
-    if (String(entry.html || "") !== String(displayedHtml || "")) {
-      entry.html = String(displayedHtml || "");
-    }
-    if (String(editor.innerHTML || "") !== String(displayedHtml || "")) {
-      editor.innerHTML = displayedHtml;
-    }
     appendSubSegCommentBubble(card, key, pathKey, entry);
     subSegValueList.appendChild(card);
-    visibleChildren.forEach(function (item, visibleIndex) {
-      const childHasFollowingBranch = Boolean((visibleIndex < (visibleChildren.length - 1)) || hasFollowingBranch);
+    renderChildren.forEach(function (item, visibleIndex) {
+      const childHasFollowingBranch = Boolean((visibleIndex < (renderChildren.length - 1)) || hasFollowingBranch);
       renderSubSegValueCardNode(
         key,
         item.childEntry,
         item.childPath,
         depth + 1,
-        visibleIndex === (visibleChildren.length - 1),
+        visibleIndex === (renderChildren.length - 1),
         nextAncestorGuideDepths,
         visibleIndex + 1,
         childHasFollowingBranch,
-        visibleIndex === activeBubbleIndex
+        true
       );
     });
   }
@@ -5861,14 +6516,29 @@
     const nextText = String(inputEl && inputEl.textContent ? inputEl.textContent : "").trim();
     const previousHtml = String(entry.commentHtml || "");
     const previousText = String(entry.commentValue || "").trim();
-    logRuntimeAction("subseg-comment:input", {
-      key,
-      pathKey,
-      previousHtml,
-      nextHtml,
-      previousText,
-      nextText
-    });
+    const selection = window.getSelection ? window.getSelection() : null;
+    const selectionRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    logRuntimeAction("subseg-comment:input", buildSubSegRichEditorLogDetail({
+      data: {
+        inputEl,
+        inputRole: "comment",
+        key,
+        pathKey,
+        entry,
+        commentEntry: entry,
+        previousHtml,
+        previousText,
+        nextHtml,
+        nextText,
+        selectionText: selection && selection.rangeCount > 0 ? String(selection.toString() || "") : "",
+        selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : "",
+        selectionOffsets: inputEl && selectionRange && inputEl.contains(selectionRange.startContainer) && inputEl.contains(selectionRange.endContainer)
+          ? getContentEditableSelectionOffsets(inputEl, selectionRange)
+          : null,
+        reason: "comment-input"
+      },
+      deps: {}
+    }));
     entry.commentHtml = nextHtml;
     entry.commentValue = nextText;
     entry.commentUpdatedAt = new Date().toISOString();
@@ -6025,10 +6695,22 @@
     const key = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : "");
     const pathKey = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : "");
     if (!key || !pathKey) {
-      return;
+      return false;
     }
     const stateKey = getSubSegCardRecallStateKey(key, pathKey);
-    const html = String(inputEl && inputEl.innerHTML ? inputEl.innerHTML : "");
+    const selection = window.getSelection ? window.getSelection() : null;
+    const selectionRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    const selectionOffsets = inputEl && selectionRange && inputEl.contains(selectionRange.startContainer) && inputEl.contains(selectionRange.endContainer)
+      ? getContentEditableSelectionOffsets(inputEl, selectionRange)
+      : null;
+    const rawHtml = String(inputEl && inputEl.innerHTML ? inputEl.innerHTML : "");
+    const html = normalizeSubSegRichEditorHighlightWhitespaceHtml(rawHtml, getSubSegRichEditorPreserveGroupId(inputEl, rawHtml));
+    if (inputEl && html !== rawHtml) {
+      inputEl.innerHTML = html;
+      if (selectionOffsets) {
+        restoreContentEditableSelection(inputEl, selectionOffsets);
+      }
+    }
     const text = String(inputEl && inputEl.textContent ? inputEl.textContent : "").trim();
     const previousHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)
       ? String(state.subSegCardLiveValueOverrides[stateKey] || "")
@@ -6041,20 +6723,35 @@
         inputEl.classList.remove("is-seed-origin");
       }
     }
-    logRuntimeAction("subseg-card:input", {
-      key,
-      pathKey,
-      previousHtml,
-      nextHtml: html,
-      previousText,
-      nextText: text
-    });
+    logRuntimeAction("subseg-card:input", buildSubSegRichEditorLogDetail({
+      data: {
+        inputEl,
+        inputRole: "card",
+        key,
+        pathKey,
+        entry,
+        previousHtml,
+        previousText,
+        nextHtml: html,
+        nextText: text,
+        selectionText: selection && selection.rangeCount > 0 ? String(selection.toString() || "") : "",
+        selectionHtml: selectionRange ? getContentEditableSelectionHtml(selectionRange) : "",
+        selectionOffsets,
+        reason: "card-input"
+      },
+      deps: {}
+    }));
     state.subSegCardLiveValueOverrides[stateKey] = html;
+    let derivedChanged = false;
+    if (entry) {
+      derivedChanged = false;
+    }
     setSubSegCardInternalChangeGuard(key, pathKey);
     scheduleSubSegCardCommitDebounced(key, pathKey);
     requestAnimationFrame(function () {
       clearSubSegCardInternalChangeGuard(key, pathKey);
     });
+    return derivedChanged;
   }
 
   function handleSubSegCardInputFocus(event) {
@@ -6102,14 +6799,21 @@
     const nextText = String(inputEl && inputEl.textContent ? inputEl.textContent : "").trim();
     const previousHtml = getSubSegEntryHtml(entry);
     const previousText = getSubSegEntryText(entry);
-    logRuntimeAction("subseg-card:commit-attempt", {
-      key,
-      pathKey,
-      previousHtml,
-      nextHtml,
-      previousText,
-      nextText
-    });
+    logRuntimeAction("subseg-card:commit-attempt", buildSubSegRichEditorLogDetail({
+      data: {
+        inputEl,
+        inputRole: "card",
+        key,
+        pathKey,
+        entry,
+        previousHtml,
+        previousText,
+        nextHtml,
+        nextText,
+        reason: "commit-attempt"
+      },
+      deps: {}
+    }));
     const result = applySubSegCardValueCommit(key, pathKey, {
       html: nextHtml,
       text: nextText
@@ -6131,20 +6835,29 @@
     const stateKey = getSubSegCardRecallStateKey(key, pathKey);
     const nextHtmlRaw = String(nextValueRaw && typeof nextValueRaw === "object" ? nextValueRaw.html || "" : "");
     const nextText = String(nextValueRaw && typeof nextValueRaw === "object" ? nextValueRaw.text || "" : "").trim();
-    const nextHtml = nextHtmlRaw || textToSafeHtml(nextText);
+    const preserveGroupId = getSubSegRichEditorPreserveGroupIdForState(key, pathKey, nextHtmlRaw || textToSafeHtml(nextText));
+    const nextHtml = normalizeSubSegRichEditorHighlightWhitespaceHtml(nextHtmlRaw || textToSafeHtml(nextText), preserveGroupId);
     const nextValue = nextText || htmlToPlainText(nextHtml).trim();
     const prevHtml = String(entry.html || getSubSegEntryHtml(entry));
     const prevValue = String(entry.value || getSubSegEntryText(entry));
     const hasNextContent = Boolean(nextValue || String(nextHtml).trim());
-    logRuntimeAction("subseg-card:commit", {
-      key,
-      pathKey,
-      previousHtml: prevHtml,
-      nextHtml,
-      previousText: prevValue,
-      nextText: nextValue,
-      changed: hasNextContent && !(nextHtml === prevHtml && nextText === prevValue)
+    const commitDetail = buildSubSegRichEditorLogDetail({
+      data: {
+        inputRole: "card",
+        key,
+        pathKey,
+        entry,
+        previousHtml: prevHtml,
+        previousText: prevValue,
+        nextHtml,
+        nextText: nextValue,
+        reason: "commit"
+      },
+      deps: {}
     });
+    commitDetail.changed = hasNextContent && !(nextHtml === prevHtml && nextText === prevValue);
+    commitDetail.hasNextContent = hasNextContent;
+    logRuntimeAction("subseg-card:commit", commitDetail);
     if (!hasNextContent || (nextHtml === prevHtml && nextText === prevValue)) {
       if (Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)) {
         delete state.subSegCardLiveValueOverrides[stateKey];
@@ -6243,7 +6956,7 @@
         html: nextHtml,
         text: nextText
       }, { rerender: false, restoreFocus: false });
-    }, 2500);
+    }, 500);
   }
 
   function getSubSegValueEntry(key, index) {
@@ -6299,6 +7012,640 @@
     return key + "#" + String(pathKey || "");
   }
 
+  function getSubSegRichEditorSpanStateKey(inputEl) {
+    if (!inputEl) {
+      return "";
+    }
+    const key = String(inputEl.dataset && inputEl.dataset.subSegValueKey ? inputEl.dataset.subSegValueKey : "");
+    const pathKey = String(inputEl.dataset && inputEl.dataset.subSegValuePath ? inputEl.dataset.subSegValuePath : "");
+    return getSubSegCardRecallStateKey(key, pathKey) + "::span";
+  }
+
+  function getSubSegRichEditorSpanList(inputEl) {
+    if (!inputEl || !inputEl.querySelectorAll) {
+      return [];
+    }
+    return Array.from(inputEl.querySelectorAll(".subseg-inline-highlight"));
+  }
+
+  function getSubSegRichEditorSpanGroupId(spanEl) {
+    if (!spanEl) {
+      return "";
+    }
+    if (spanEl.dataset && spanEl.dataset.subsegSpanGroup) {
+      return String(spanEl.dataset.subsegSpanGroup || "");
+    }
+    return "";
+  }
+
+  function setSubSegRichEditorSpanGroupId(spanEl, groupId) {
+    if (!spanEl || !spanEl.dataset) {
+      return "";
+    }
+    const nextGroupId = String(groupId || "");
+    if (nextGroupId) {
+      spanEl.dataset.subsegSpanGroup = nextGroupId;
+    } else {
+      delete spanEl.dataset.subsegSpanGroup;
+    }
+    return nextGroupId;
+  }
+
+  function ensureSubSegRichEditorSpanGroupId(spanEl) {
+    if (!spanEl) {
+      return "";
+    }
+    const existing = getSubSegRichEditorSpanGroupId(spanEl);
+    if (existing) {
+      return existing;
+    }
+    const generated = createSubSegValueNodeId();
+    return setSubSegRichEditorSpanGroupId(spanEl, generated);
+  }
+
+  function getSubSegRichEditorSpanGroups(inputEl) {
+    const spans = getSubSegRichEditorSpanList(inputEl);
+    const groups = [];
+    const seen = {};
+    spans.forEach(function (spanEl) {
+      if (!spanEl) {
+        return;
+      }
+      const groupId = ensureSubSegRichEditorSpanGroupId(spanEl);
+      if (!groupId) {
+        return;
+      }
+      if (!seen[groupId]) {
+        seen[groupId] = {
+          groupId,
+          spans: []
+        };
+        groups.push(seen[groupId]);
+      }
+      seen[groupId].spans.push(spanEl);
+    });
+    return groups;
+  }
+
+  function findSubSegRichEditorSpanGroupIndexById(inputEl, groupId) {
+    const targetGroupId = String(groupId || "");
+    if (!targetGroupId) {
+      return -1;
+    }
+    const groups = getSubSegRichEditorSpanGroups(inputEl);
+    return groups.findIndex(function (group) {
+      return Boolean(group && String(group.groupId || "") === targetGroupId);
+    });
+  }
+
+  function clearSubSegRichEditorSpanTargetVisuals(inputEl) {
+    if (!inputEl || !inputEl.querySelectorAll) {
+      return false;
+    }
+    const spans = Array.from(inputEl.querySelectorAll(".subseg-inline-highlight.is-span-target"));
+    if (spans.length <= 0) {
+      return false;
+    }
+    spans.forEach(function (span) {
+      if (span && span.classList) {
+        span.classList.remove("is-span-target");
+      }
+    });
+    return true;
+  }
+
+  function clearSubSegRichEditorSelection(inputEl) {
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (selection) {
+      selection.removeAllRanges();
+    }
+    if (!inputEl) {
+      return true;
+    }
+    try {
+      inputEl.focus({ preventScroll: true });
+    } catch {
+      inputEl.focus();
+    }
+    return true;
+  }
+
+  function clearSubSegRichEditorSpanGroupIdsInDescendants(spanEl) {
+    if (!spanEl || !spanEl.querySelectorAll) {
+      return false;
+    }
+    const descendants = Array.from(spanEl.querySelectorAll(".subseg-inline-highlight[data-subseg-span-group]"));
+    if (descendants.length <= 0) {
+      return false;
+    }
+    descendants.forEach(function (node) {
+      if (node && node.dataset) {
+        delete node.dataset.subsegSpanGroup;
+      }
+    });
+    return true;
+  }
+
+  function getSubSegRichEditorStoredSpanTargetIndex(inputEl, total) {
+    const stateKey = getSubSegRichEditorSpanStateKey(inputEl);
+    const raw = Number(state.subSegCardSpanTargetIndexByKey[stateKey]);
+    if (!Number.isFinite(raw)) {
+      return -1;
+    }
+    const normalized = Math.floor(raw);
+    if (normalized < 0) {
+      return -1;
+    }
+    const max = Number.isFinite(total) ? Math.floor(total) : 0;
+    if (max <= 0) {
+      return -1;
+    }
+    return normalized % max;
+  }
+
+  function getSubSegRichEditorSpanTargetSelectionRange(inputEl, spanEl) {
+    if (!inputEl || !spanEl || !document.createRange) {
+      return null;
+    }
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(spanEl);
+      range.collapse(false);
+      return range;
+    } catch {
+      try {
+        const fallbackRange = document.createRange();
+        fallbackRange.selectNodeContents(inputEl);
+        fallbackRange.collapse(false);
+        return fallbackRange;
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  function setSubSegRichEditorSpanTargetVisuals(inputEl, nextIndex) {
+    if (!inputEl || !inputEl.querySelectorAll) {
+      return false;
+    }
+    clearSubSegRichEditorSpanTargetVisuals(inputEl);
+    if (!Number.isInteger(nextIndex) || nextIndex < 0) {
+      return false;
+    }
+    const groups = getSubSegRichEditorSpanGroups(inputEl);
+    if (nextIndex >= groups.length) {
+      return false;
+    }
+    const group = groups[nextIndex];
+    if (!group || !Array.isArray(group.spans) || group.spans.length <= 0) {
+      return false;
+    }
+    group.spans.forEach(function (span) {
+      if (span && span.classList) {
+        span.classList.add("is-span-target");
+      }
+    });
+    return true;
+  }
+
+  function getSubSegRichEditorSpanTargetSelectionOffsets(inputEl) {
+    if (!inputEl) {
+      return null;
+    }
+    const groups = getSubSegRichEditorSpanGroups(inputEl);
+    const targetIndex = getSubSegRichEditorSpanTargetIndex(inputEl, groups);
+    if (targetIndex < 0 || targetIndex >= groups.length) {
+      return null;
+    }
+    const targetGroup = groups[targetIndex];
+    const targetSpan = targetGroup && Array.isArray(targetGroup.spans) && targetGroup.spans.length > 0
+      ? targetGroup.spans[targetGroup.spans.length - 1]
+      : null;
+    const targetRange = targetSpan ? getSubSegRichEditorSpanRange(inputEl, targetSpan) : null;
+    return targetRange ? getContentEditableSelectionOffsets(inputEl, targetRange) : null;
+  }
+
+  function findSubSegValueChildEntryByAnchor(parentEntry, anchorStart, anchorEnd) {
+    const children = parentEntry && Array.isArray(parentEntry.children) ? parentEntry.children : [];
+    const start = Number(anchorStart);
+    const end = Number(anchorEnd);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      return null;
+    }
+    return children.find(function (child) {
+      if (!child) {
+        return false;
+      }
+      const childStart = Number(child.anchorStart);
+      const childEnd = Number(child.anchorEnd);
+      return Number.isFinite(childStart) &&
+        Number.isFinite(childEnd) &&
+        Math.abs(childStart - start) <= 0.01 &&
+        Math.abs(childEnd - end) <= 0.01;
+    }) || null;
+  }
+
+  function ensureSubSegRichEditorSpanTargetChildEntry(inputEl, nextIndex) {
+    if (!inputEl || !Number.isInteger(nextIndex) || nextIndex < 0) {
+      return false;
+    }
+    const key = String(inputEl.dataset && inputEl.dataset.subSegValueKey ? inputEl.dataset.subSegValueKey : "");
+    const pathKey = String(inputEl.dataset && inputEl.dataset.subSegValuePath ? inputEl.dataset.subSegValuePath : "");
+    if (!key) {
+      return false;
+    }
+    const parentEntry = pathKey ? getSubSegValueEntry(key, pathKey) : ensureStarterSubSegValueEntry(key);
+    if (!parentEntry) {
+      return false;
+    }
+    const groups = getSubSegRichEditorSpanGroups(inputEl);
+    if (nextIndex >= groups.length) {
+      return false;
+    }
+    const group = groups[nextIndex];
+    const targetSpan = group && Array.isArray(group.spans) && group.spans.length > 0
+      ? group.spans[group.spans.length - 1]
+      : null;
+    const targetRange = targetSpan ? getSubSegRichEditorSpanRange(inputEl, targetSpan) : null;
+    const targetOffsets = targetRange ? getContentEditableSelectionOffsets(inputEl, targetRange) : null;
+    if (!targetOffsets || !Number.isFinite(targetOffsets.start) || !Number.isFinite(targetOffsets.end) || targetOffsets.end <= targetOffsets.start) {
+      return false;
+    }
+    const parentList = Array.isArray(state.subSegValueEntries[key]) ? state.subSegValueEntries[key] : null;
+    if (!parentList) {
+      return false;
+    }
+    const beforePathByNodeId = collectSubSegValueNodePathMap(parentList, [], {});
+    let childEntry = findSubSegValueChildEntryByAnchor(parentEntry, targetOffsets.start, targetOffsets.end);
+    let changed = false;
+    if (!childEntry) {
+      childEntry = {
+        nodeId: createSubSegValueNodeId(),
+        value: "",
+        html: "",
+        commentHtml: "",
+        createdAt: new Date().toISOString(),
+        children: [],
+        anchorStart: Math.floor(targetOffsets.start),
+        anchorEnd: Math.floor(targetOffsets.end),
+        isStarter: true,
+        isSeedOrigin: false
+      };
+      parentEntry.children = Array.isArray(parentEntry.children) ? parentEntry.children.slice() : [];
+      parentEntry.children.push(childEntry);
+      parentEntry.children = getSortedChildEntries(parentEntry.children);
+      changed = true;
+    } else {
+      const nextStart = Math.floor(targetOffsets.start);
+      const nextEnd = Math.floor(targetOffsets.end);
+      if (childEntry.anchorStart !== nextStart || childEntry.anchorEnd !== nextEnd) {
+        childEntry.anchorStart = nextStart;
+        childEntry.anchorEnd = nextEnd;
+        changed = true;
+      }
+      if (childEntry.value !== "" || childEntry.html !== "" || childEntry.commentHtml !== "") {
+        childEntry.value = "";
+        childEntry.html = "";
+        childEntry.commentHtml = "";
+        changed = true;
+      }
+      if (!Array.isArray(childEntry.children)) {
+        childEntry.children = [];
+        changed = true;
+      }
+      if (!childEntry.isStarter) {
+        childEntry.isStarter = true;
+        changed = true;
+      }
+    }
+    if (!changed) {
+      return false;
+    }
+    const afterPathByNodeId = collectSubSegValueNodePathMap(parentList, [], {});
+    remapSubSegPathStateAfterTreeMutation({
+      data: {
+        key,
+        beforePathByNodeId,
+        afterPathByNodeId
+      },
+      deps: {}
+    });
+    return true;
+  }
+
+  function applySubSegRichEditorSpanBridge(inputEl, targetSpan, linkedSpan) {
+    if (!inputEl || !targetSpan || !linkedSpan || targetSpan === linkedSpan || !document.createRange) {
+      return false;
+    }
+    const targetRange = getSubSegRichEditorSpanRange(inputEl, targetSpan);
+    const linkedRange = getSubSegRichEditorSpanRange(inputEl, linkedSpan);
+    if (!targetRange || !linkedRange) {
+      return false;
+    }
+    const targetPos = Number(getContentEditableSelectionOffsets(inputEl, targetRange) ? getContentEditableSelectionOffsets(inputEl, targetRange).start : NaN);
+    const linkedPos = Number(getContentEditableSelectionOffsets(inputEl, linkedRange) ? getContentEditableSelectionOffsets(inputEl, linkedRange).start : NaN);
+    if (!Number.isFinite(targetPos) || !Number.isFinite(linkedPos) || targetPos === linkedPos) {
+      return false;
+    }
+    const startSpan = targetPos < linkedPos ? targetSpan : linkedSpan;
+    const endSpan = targetPos < linkedPos ? linkedSpan : targetSpan;
+    const bridgeRange = document.createRange();
+    try {
+      bridgeRange.setStartAfter(startSpan);
+      bridgeRange.setEndBefore(endSpan);
+    } catch {
+      return false;
+    }
+    if (bridgeRange.collapsed) {
+      return false;
+    }
+    const fragment = bridgeRange.extractContents();
+    const bridge = document.createElement("span");
+    bridge.className = "subseg-inline-highlight-bridge";
+    bridge.appendChild(fragment);
+    try {
+      bridgeRange.insertNode(bridge);
+    } catch {
+      return false;
+    }
+    return true;
+  }
+
+  function getSubSegRichEditorSpanRange(inputEl, spanEl) {
+    if (!inputEl || !spanEl || !inputEl.contains(spanEl) || !document.createRange) {
+      return null;
+    }
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(spanEl);
+      return range;
+    } catch {
+      return null;
+    }
+  }
+
+  function getSubSegRichEditorSpanAncestor(inputEl, node) {
+    if (!inputEl || !node) {
+      return null;
+    }
+    let current = node.nodeType === Node.ELEMENT_NODE ? node : node.parentNode;
+    while (current && current !== inputEl) {
+      if (current.classList && current.classList.contains("subseg-inline-highlight")) {
+        return current;
+      }
+      current = current.parentNode;
+    }
+    return null;
+  }
+
+  function setSubSegRichEditorCaretAfterNode(inputEl, node) {
+    if (!inputEl || !node || !document.createRange) {
+      return false;
+    }
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!selection) {
+      return false;
+    }
+    try {
+      const range = document.createRange();
+      range.setStartAfter(node);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function getSubSegRichEditorSpanOffsetInfo(inputEl, spanEl) {
+    if (!inputEl || !spanEl) {
+      return null;
+    }
+    const spanRange = getSubSegRichEditorSpanRange(inputEl, spanEl);
+    if (!spanRange) {
+      return null;
+    }
+    const spanOffsets = getContentEditableSelectionOffsets(inputEl, spanRange);
+    if (!spanOffsets) {
+      return null;
+    }
+    return {
+      start: Number(spanOffsets.start),
+      end: Number(spanOffsets.end)
+    };
+  }
+
+  function getSubSegRichEditorSelectionOffsetInfo(inputEl, range) {
+    if (!inputEl || !range) {
+      return null;
+    }
+    const offsets = getContentEditableSelectionOffsets(inputEl, range);
+    if (!offsets) {
+      return null;
+    }
+    return {
+      start: Number(offsets.start),
+      end: Number(offsets.end)
+    };
+  }
+
+  function setSubSegRichEditorCollapsedCaret(inputEl, targetNode, collapseToEnd) {
+    if (!inputEl || !document.createRange) {
+      return false;
+    }
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!selection) {
+      return false;
+    }
+    const range = document.createRange();
+    try {
+      if (targetNode && inputEl.contains(targetNode)) {
+        range.selectNodeContents(targetNode);
+      } else {
+        range.selectNodeContents(inputEl);
+      }
+      range.collapse(Boolean(collapseToEnd));
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return true;
+    } catch {
+      try {
+        if (typeof selection.collapse === "function") {
+          const node = targetNode && inputEl.contains(targetNode) ? targetNode : inputEl;
+          const offset = Boolean(collapseToEnd) && node && Number.isFinite(Number(node.childNodes && node.childNodes.length))
+            ? node.childNodes.length
+            : 0;
+          selection.collapse(node, offset);
+          return true;
+        }
+      } catch {
+        // Fall through to a hard failure.
+      }
+      return false;
+    }
+  }
+
+  function getSubSegRichEditorSpanTargetIndex(inputEl, spans) {
+    const list = Array.isArray(spans) ? spans : [];
+    const groups = list.length > 0 && Array.isArray(list[0] && list[0].spans)
+      ? list
+      : getSubSegRichEditorSpanGroups(inputEl);
+    const total = groups.length;
+    if (total <= 0) {
+      return -1;
+    }
+    const selection = window.getSelection ? window.getSelection() : null;
+    const currentRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    const currentOffsets = currentRange && inputEl && inputEl.contains(currentRange.startContainer) && inputEl.contains(currentRange.endContainer)
+      ? getContentEditableSelectionOffsets(inputEl, currentRange)
+      : null;
+    if (currentOffsets) {
+      const exactIndex = groups.findIndex(function (group) {
+        return Array.isArray(group.spans) && group.spans.some(function (spanEl) {
+          const spanRange = getSubSegRichEditorSpanRange(inputEl, spanEl);
+          if (!spanRange) {
+            return false;
+          }
+          const spanOffsets = getContentEditableSelectionOffsets(inputEl, spanRange);
+          return Boolean(spanOffsets && spanOffsets.start === currentOffsets.start && spanOffsets.end === currentOffsets.end);
+        });
+      });
+      if (exactIndex >= 0) {
+        return exactIndex;
+      }
+    }
+    const stateKey = getSubSegRichEditorSpanStateKey(inputEl);
+    const raw = Number(state.subSegCardSpanTargetIndexByKey[stateKey]);
+    if (!Number.isFinite(raw)) {
+      return -1;
+    }
+    const normalized = Math.floor(raw);
+    if (normalized < -1) {
+      return -1;
+    }
+    if (normalized === -1) {
+      return -1;
+    }
+    return normalized % total;
+  }
+
+  function setSubSegRichEditorSpanTargetIndex(inputEl, nextIndex) {
+    const stateKey = getSubSegRichEditorSpanStateKey(inputEl);
+    if (!stateKey) {
+      return;
+    }
+    const value = Number(nextIndex);
+    if (!Number.isFinite(value)) {
+      delete state.subSegCardSpanTargetIndexByKey[stateKey];
+      return;
+    }
+    state.subSegCardSpanTargetIndexByKey[stateKey] = Math.floor(value);
+  }
+
+  function clearSubSegRichEditorSpanTargetIndexForKey(key) {
+    if (!key || !state.subSegCardSpanTargetIndexByKey) {
+      return false;
+    }
+    let changed = false;
+    Object.keys(state.subSegCardSpanTargetIndexByKey).forEach(function (stateKey) {
+      if (stateKey.startsWith(String(key) + "#")) {
+        delete state.subSegCardSpanTargetIndexByKey[stateKey];
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  function cycleSubSegRichEditorSpanSelection(inputEl, delta) {
+    const groups = getSubSegRichEditorSpanGroups(inputEl);
+    const total = groups.length;
+    if (!inputEl || total <= 0) {
+      return false;
+    }
+    const stateKey = getSubSegRichEditorSpanStateKey(inputEl);
+    const currentIndex = getSubSegRichEditorSpanTargetIndex(inputEl, groups);
+    const slotCount = total + 1;
+    const currentSlot = currentIndex < 0 ? 0 : currentIndex + 1;
+    const nextSlot = (currentSlot + delta + slotCount) % slotCount;
+    const nextIndex = nextSlot === 0 ? -1 : nextSlot - 1;
+    setSubSegRichEditorSpanTargetIndex(inputEl, nextIndex);
+    const key = String(inputEl.dataset && inputEl.dataset.subSegValueKey ? inputEl.dataset.subSegValueKey : "");
+    const pathKey = String(inputEl.dataset && inputEl.dataset.subSegValuePath ? inputEl.dataset.subSegValuePath : "");
+    logRuntimeAction("subseg-rich-span:cycle", buildSubSegRichEditorLogDetail({
+      data: {
+        inputEl,
+        inputRole: "card",
+        key,
+        pathKey,
+        reason: "span-cycle",
+        bubbleTargetIndex: nextIndex,
+        spanTargetVisualIndex: nextIndex,
+        html: String(inputEl.innerHTML || ""),
+        text: getContentEditableDisplayText(inputEl)
+      },
+      deps: {}
+    }));
+    const childChanged = nextIndex >= 0 ? ensureSubSegRichEditorSpanTargetChildEntry(inputEl, nextIndex) : false;
+    try {
+      inputEl.focus({ preventScroll: true });
+    } catch {
+      inputEl.focus();
+    }
+    setSubSegRichEditorSpanTargetVisuals(inputEl, nextIndex);
+    if (nextIndex < 0) {
+      clearSubSegRichEditorSelection(inputEl);
+      renderSubSegValuePanel();
+      if (key) {
+        focusSubSegCardInput(key, pathKey, false, { immediate: true, preserveBubbleTarget: true });
+        const resetEditor = subSegValueList
+          ? subSegValueList.querySelector(".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(pathKey) + "\"]")
+          : null;
+        if (resetEditor) {
+          setSubSegRichEditorSpanTargetVisuals(resetEditor, -1);
+          setSubSegRichEditorCollapsedCaret(resetEditor, null, false);
+        }
+      } else {
+        clearSubSegRichEditorSelection(inputEl);
+      }
+      return true;
+    }
+    if (key) {
+      if (childChanged && state.activeSubSegValueKey === key) {
+        state.activeSubSegValueKey = null;
+        renderSubSegValuePanel();
+        state.activeSubSegValueKey = key;
+      }
+      renderSubSegValuePanel();
+      focusSubSegCardInput(key, pathKey, false, { immediate: true, preserveBubbleTarget: true });
+      const refreshedEditor = subSegValueList
+        ? subSegValueList.querySelector(".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(pathKey) + "\"]")
+        : null;
+      if (refreshedEditor) {
+        const refreshedGroups = getSubSegRichEditorSpanGroups(refreshedEditor);
+        const refreshedTargetGroup = refreshedGroups[nextIndex];
+        const refreshedTargetSpan = refreshedTargetGroup && Array.isArray(refreshedTargetGroup.spans) && refreshedTargetGroup.spans.length > 0
+          ? refreshedTargetGroup.spans[refreshedTargetGroup.spans.length - 1]
+          : null;
+        setSubSegRichEditorSpanTargetVisuals(refreshedEditor, nextIndex);
+        setSubSegRichEditorCollapsedCaret(refreshedEditor, refreshedTargetSpan, true);
+        return true;
+      }
+    } else if (childChanged) {
+      try {
+        inputEl.focus({ preventScroll: true });
+      } catch {
+        inputEl.focus();
+      }
+    }
+    const targetGroup = groups[nextIndex];
+    const targetSpan = targetGroup && Array.isArray(targetGroup.spans) && targetGroup.spans.length > 0
+      ? targetGroup.spans[targetGroup.spans.length - 1]
+      : null;
+    setSubSegRichEditorCollapsedCaret(inputEl, targetSpan, true);
+    return true;
+  }
+
   function handleFocusedSubSegCardKeyDown(event) {
     const active = document.activeElement;
     if (!active || !active.classList || !active.classList.contains("subseg-value-card-input")) {
@@ -6348,6 +7695,14 @@
       childCount: Array.isArray(entry.children) ? entry.children.length : 0
     });
 
+    if (isCtrl && !isShift && (isArrowLeft || isArrowRight)) {
+      if (cycleSubSegRichEditorSpanSelection(active, isArrowRight ? 1 : -1)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return true;
+      }
+    }
+
     if (isEnter) {
       if (isCtrl) {
         event.preventDefault();
@@ -6361,6 +7716,11 @@
           });
           focusSubSegCardInput(key, insertedPathKey, false);
         }
+        return true;
+      }
+      if (markSubSegRichEditorSelection(active)) {
+        event.preventDefault();
+        event.stopPropagation();
         return true;
       }
       return false;
@@ -6388,29 +7748,33 @@
       return true;
     }
 
-    if ((isArrowLeft || isArrowRight) && !isShift) {
-      const displayedHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, getSubSegCardRecallStateKey(key, pathKey))
-        ? String(state.subSegCardLiveValueOverrides[getSubSegCardRecallStateKey(key, pathKey)] || "")
-        : getSubSegEntryHtml(entry);
-      const visibleChildren = getSubSegCardVisibleChildren({
-        data: {
-          entry,
-          path: getSubSegValuePathArray(pathKey),
-          displayedValue: getContentEditableDisplayText(active, displayedHtml)
-        },
-        deps: {}
-      });
-      if (visibleChildren.length > 0) {
-        event.preventDefault();
-        event.stopPropagation();
-        cycleSubSegInlineChildSelection(active, visibleChildren, isArrowRight ? 1 : -1);
-        return true;
-      }
-    }
-
     if (isBackspaceKey && isCtrl) {
       event.preventDefault();
       event.stopPropagation();
+      const currentSpanTargetIndex = getSubSegRichEditorSpanTargetIndex(active, getSubSegRichEditorSpanGroups(active));
+      if (currentSpanTargetIndex >= 0) {
+        clearSubSegRichEditorSelection(active);
+        setSubSegRichEditorSpanTargetIndex(active, -1);
+        setSubSegRichEditorSpanTargetVisuals(active, -1);
+        renderSubSegValuePanel();
+        if (key) {
+          focusSubSegCardInput(key, pathKey, false, { immediate: true, preserveBubbleTarget: true });
+        }
+        logRuntimeAction("subseg-rich-span:target-reset", buildSubSegRichEditorLogDetail({
+          data: {
+            inputEl: active,
+            inputRole: "card",
+            key,
+            pathKey,
+            reason: "span-target-reset",
+            spanTargetVisualIndex: -1,
+            html: String(active.innerHTML || ""),
+            text: getContentEditableDisplayText(active)
+          },
+          deps: {}
+        }));
+        return true;
+      }
       exitSelectedSubSegValueSelection("audSeg subSeg value selection exited");
       return true;
     }
@@ -6708,6 +8072,7 @@
     }
     if (activeKey) {
       delete state.subSegDraftHtmlByKey[activeKey];
+      clearSubSegRichEditorSpanTargetIndexForKey(activeKey);
       clearSubSegCardFocusTransferStack(activeKey);
     }
     renderSubSegValuePanel();
@@ -6815,7 +8180,13 @@
       deps: {}
     });
     const activeBubbleIndex = getSubSegCardBubbleTargetIndex(stateKey, visibleChildren.length);
-    return getSubSegCardDisplayedHtml(entry, sourceHtml, visibleChildren, activeBubbleIndex);
+    return getSubSegCardDisplayedHtml(
+      entry,
+      sourceHtml,
+      visibleChildren,
+      activeBubbleIndex,
+      getSubSegRichEditorPreserveGroupIdForState(key, pathKey, sourceHtml)
+    );
   }
 
   function getSubSegCardDisplayedTextForPath(key, pathKey, entry) {
@@ -7185,6 +8556,150 @@
     }
   }
 
+  function collectSubSegValueNodePathMap(nodes, pathPrefix, map) {
+    const sourceNodes = Array.isArray(nodes) ? nodes : [];
+    const sourcePathPrefix = Array.isArray(pathPrefix) ? pathPrefix : [];
+    const targetMap = map && typeof map === "object" ? map : {};
+    sourceNodes.forEach(function (entry, index) {
+      if (!entry || typeof entry !== "object") {
+        return;
+      }
+      const path = sourcePathPrefix.concat(index);
+      const nodeId = String(entry.nodeId || "");
+      if (nodeId) {
+        targetMap[nodeId] = getSubSegValuePathKey(path);
+      }
+      if (Array.isArray(entry.children) && entry.children.length > 0) {
+        collectSubSegValueNodePathMap(entry.children, path, targetMap);
+      }
+    });
+    return targetMap;
+  }
+
+  function remapSubSegPathStateAfterTreeMutation(ctx) {
+    const data = ctx && ctx.data ? ctx.data : {};
+    const key = String(data.key || "");
+    const beforePathByNodeId = data.beforePathByNodeId && typeof data.beforePathByNodeId === "object" ? data.beforePathByNodeId : {};
+    const afterPathByNodeId = data.afterPathByNodeId && typeof data.afterPathByNodeId === "object" ? data.afterPathByNodeId : {};
+    if (!key) {
+      return;
+    }
+    const beforeNodeIdByPathKey = {};
+    Object.keys(beforePathByNodeId).forEach(function (nodeId) {
+      const pathKey = String(beforePathByNodeId[nodeId] || "");
+      if (pathKey) {
+        beforeNodeIdByPathKey[pathKey] = String(nodeId || "");
+      }
+    });
+    const remapPathKey = function (pathKey) {
+      const normalizedPathKey = String(pathKey || "");
+      if (!normalizedPathKey) {
+        return "";
+      }
+      const nodeId = String(beforeNodeIdByPathKey[normalizedPathKey] || "");
+      if (!nodeId) {
+        return "";
+      }
+      return String(afterPathByNodeId[nodeId] || "");
+    };
+    const splitStateKeyPathSuffix = function (stateKey) {
+      const rawStateKey = String(stateKey || "");
+      const separatorIndex = rawStateKey.indexOf("#");
+      if (separatorIndex < 0) {
+        return {
+          entryKey: rawStateKey,
+          pathKey: "",
+          suffix: ""
+        };
+      }
+      const entryKey = String(rawStateKey.slice(0, separatorIndex) || "");
+      const remainder = String(rawStateKey.slice(separatorIndex + 1) || "");
+      const suffixIndex = remainder.indexOf("::");
+      if (suffixIndex < 0) {
+        return {
+          entryKey,
+          pathKey: remainder,
+          suffix: ""
+        };
+      }
+      return {
+        entryKey,
+        pathKey: String(remainder.slice(0, suffixIndex) || ""),
+        suffix: String(remainder.slice(suffixIndex) || "")
+      };
+    };
+    const remapObjectKeys = function (source) {
+      const next = {};
+      Object.keys(source || {}).forEach(function (stateKey) {
+        const parts = splitStateKeyPathSuffix(stateKey);
+        if (!parts.pathKey && parts.entryKey === String(stateKey || "")) {
+          next[stateKey] = source[stateKey];
+          return;
+        }
+        if (parts.entryKey !== key) {
+          next[stateKey] = source[stateKey];
+          return;
+        }
+        const nextPathKey = remapPathKey(parts.pathKey);
+        if (!nextPathKey) {
+          return;
+        }
+        const nextStateKey = getSubSegCardRecallStateKey(parts.entryKey, nextPathKey) + parts.suffix;
+        next[nextStateKey] = source[stateKey];
+      });
+      return next;
+    };
+    const clearMutatedCommitTimers = function (source) {
+      const next = {};
+      Object.keys(source || {}).forEach(function (stateKey) {
+        const separatorIndex = String(stateKey || "").indexOf("#");
+        if (separatorIndex < 0) {
+          next[stateKey] = source[stateKey];
+          return;
+        }
+        const entryKey = String(stateKey.slice(0, separatorIndex) || "");
+        if (entryKey !== key) {
+          next[stateKey] = source[stateKey];
+          return;
+        }
+        clearSubSegCardCommitTimerByStateKey(stateKey);
+      });
+      return next;
+    };
+    state.subSegCardLiveValueOverrides = remapObjectKeys(state.subSegCardLiveValueOverrides || {});
+    state.subSegCardInternalChangeGuards = remapObjectKeys(state.subSegCardInternalChangeGuards || {});
+    state.subSegCardBubbleTargetIndexByKey = remapObjectKeys(state.subSegCardBubbleTargetIndexByKey || {});
+    state.subSegCardSpanTargetIndexByKey = remapObjectKeys(state.subSegCardSpanTargetIndexByKey || {});
+    state.subSegCardCommitTimerIds = clearMutatedCommitTimers(state.subSegCardCommitTimerIds || {});
+    if (state.subSegCardDeleteDialogKey) {
+      const dialogSeparatorIndex = String(state.subSegCardDeleteDialogKey).indexOf("#");
+      if (dialogSeparatorIndex >= 0) {
+        const dialogKey = String(state.subSegCardDeleteDialogKey.slice(0, dialogSeparatorIndex) || "");
+        const dialogPathKey = String(state.subSegCardDeleteDialogKey.slice(dialogSeparatorIndex + 1) || "");
+        if (dialogKey === key) {
+          const nextDialogPathKey = remapPathKey(dialogPathKey);
+          state.subSegCardDeleteDialogKey = nextDialogPathKey ? getSubSegCardRecallStateKey(dialogKey, nextDialogPathKey) : null;
+        }
+      }
+    }
+    const remapTransferStack = state.subSegCardFocusTransferStackByKey && Array.isArray(state.subSegCardFocusTransferStackByKey[key])
+      ? state.subSegCardFocusTransferStackByKey[key]
+      : null;
+    if (remapTransferStack) {
+      remapTransferStack.forEach(function (record) {
+        if (!record || typeof record !== "object") {
+          return;
+        }
+        if (record.fromNodeId && beforePathByNodeId[record.fromNodeId]) {
+          record.fromPathKey = String(afterPathByNodeId[record.fromNodeId] || "");
+        }
+        if (record.toNodeId && beforePathByNodeId[record.toNodeId]) {
+          record.toPathKey = String(afterPathByNodeId[record.toNodeId] || "");
+        }
+      });
+    }
+  }
+
   function getSortedChildEntries(children) {
     const list = Array.isArray(children) ? children.slice() : [];
     list.sort(function (a, b) {
@@ -7530,6 +9045,9 @@
     const target = getTargetSpanBounds();
     if (!target || duration <= 0) {
       targetProgressWrap.classList.add("hidden");
+      if (clearSubSegsButton) {
+        clearSubSegsButton.classList.add("hidden");
+      }
       targetSpanOverlay.style.display = "none";
       if (targetSubSegActiveFill) {
         targetSubSegActiveFill.style.display = "none";
@@ -7538,6 +9056,9 @@
     }
 
     targetProgressWrap.classList.remove("hidden");
+    if (clearSubSegsButton) {
+      clearSubSegsButton.classList.remove("hidden");
+    }
 
     const current = Math.max(target.start, Math.min(target.end, Number.isFinite(audio.currentTime) ? audio.currentTime : target.start));
     const spanLength = Math.max(0, target.end - target.start);
@@ -7571,6 +9092,124 @@
     targetSpanOverlay.style.left = "0%";
     targetSpanOverlay.style.width = "100%";
     renderTargetMarkers(target);
+  }
+
+  function clearSubSegStateForTargetKey(targetKey) {
+    const key = String(targetKey || "");
+    if (!key) {
+      return;
+    }
+    const stateKeyPrefix = key + "#";
+    const wipeKeyedState = function (bag, matcher) {
+      if (!bag || typeof bag !== "object") {
+        return;
+      }
+      Object.keys(bag).forEach(function (bagKey) {
+        if (matcher(bagKey)) {
+          delete bag[bagKey];
+        }
+      });
+    };
+
+    delete state.subSegValueEntries[key];
+    delete state.subSegDraftHtmlByKey[key];
+    if (state.activeSubSegValueKey === key) {
+      state.activeSubSegValueKey = null;
+    }
+
+    wipeKeyedState(state.subSegCardLiveValueOverrides, function (bagKey) {
+      return bagKey === stateKeyPrefix || bagKey.indexOf(stateKeyPrefix) === 0;
+    });
+    wipeKeyedState(state.subSegCardInternalChangeGuards, function (bagKey) {
+      return bagKey === stateKeyPrefix || bagKey.indexOf(stateKeyPrefix) === 0;
+    });
+    wipeKeyedState(state.subSegCardCommitTimerIds, function (bagKey) {
+      if (bagKey === stateKeyPrefix || bagKey.indexOf(stateKeyPrefix) === 0) {
+        clearSubSegCardCommitTimerByStateKey(bagKey);
+        return true;
+      }
+      return false;
+    });
+    wipeKeyedState(state.subSegCardBubbleTargetIndexByKey, function (bagKey) {
+      return bagKey === stateKeyPrefix || bagKey.indexOf(stateKeyPrefix) === 0;
+    });
+    wipeKeyedState(state.subSegCardSpanTargetIndexByKey, function (bagKey) {
+      return bagKey === stateKeyPrefix || bagKey.indexOf(stateKeyPrefix) === 0;
+    });
+    wipeKeyedState(state.subSegCardFocusTransferStackByKey, function (bagKey) {
+      return bagKey === key;
+    });
+    if (state.subSegCardDeleteDialogKey && (
+      state.subSegCardDeleteDialogKey === key ||
+      state.subSegCardDeleteDialogKey.indexOf(stateKeyPrefix) === 0
+    )) {
+      state.subSegCardDeleteDialogKey = null;
+    }
+  }
+
+  function clearTargetSubSegsForSelectedAudSeg() {
+    if (!hasTargetSpan()) {
+      setSaveStatus("Select an audSeg first (Ctrl+Left/Right)");
+      return false;
+    }
+    syncTargetSubSegsFromCurrentBounds();
+    const target = getTargetSpanBounds();
+    if (!target) {
+      setSaveStatus("Select an audSeg first (Ctrl+Left/Right)");
+      return false;
+    }
+    const targetSubSegs = Array.isArray(state.targetSubSegs) ? state.targetSubSegs.slice() : [];
+    if (!targetSubSegs.length) {
+      setSaveStatus("No audSeg subSegs to clear");
+      return false;
+    }
+
+    const keysToRemove = [];
+    const keySet = Object.create(null);
+    targetSubSegs.forEach(function (seg) {
+      const key = getSubSegValueKey(seg);
+      if (key && !keySet[key]) {
+        keySet[key] = true;
+        keysToRemove.push(key);
+      }
+    });
+
+    if (!keysToRemove.length) {
+      setSaveStatus("No audSeg subSegs to clear");
+      return false;
+    }
+
+    logRuntimeAction("audseg:clear-subsegs", {
+      targetSpanIndex: state.targetSpanIndex,
+      targetStart: target.start,
+      targetEnd: target.end,
+      removedCount: keysToRemove.length
+    });
+
+    state.subSegs = state.subSegs.filter(function (seg) {
+      return !keySet[getSubSegValueKey(seg)];
+    });
+    keysToRemove.forEach(function (key) {
+      clearSubSegStateForTargetKey(key);
+    });
+    state.selectedTargetSubSegIndex = -1;
+    state.targetMarkerSignature = "";
+    state.subSegSignature = "";
+    state.markerSignature = "";
+    clearDeleteTarget({ silent: true });
+    syncTargetSubSegsFromCurrentBounds();
+    updateUi();
+    enqueueAutoSave();
+    setSaveStatus("Cleared " + String(keysToRemove.length) + " audSeg subSeg" + (keysToRemove.length === 1 ? "" : "s"));
+    return true;
+  }
+
+  function handleClearTargetSubSegsClick(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    clearTargetSubSegsForSelectedAudSeg();
   }
 
   function renderTargetMarkers(target) {
@@ -7690,7 +9329,7 @@
       }
       const createdAt = String(entry.createdAt || nowIso);
       const childrenRaw = Array.isArray(entry.children) ? entry.children : [];
-      const children = getSortedChildEntries(
+      let children = getSortedChildEntries(
         childrenRaw
           .map(function (child) { return normalizeSubSegValueEntryNode(child, nowIso); })
           .filter(function (child) { return Boolean(child); })
@@ -8311,6 +9950,27 @@
     };
   }
 
+  async function ensureLiveAuthSession() {
+    if (!state.authUser || !state.authToken) {
+      return false;
+    }
+    try {
+      const response = await boundFetch("/api/auth/ping", {
+        method: "POST",
+        cache: "no-store",
+        headers: buildAuthHeaders()
+      });
+      if (response.status === 401) {
+        clearLoginState("Log in again before continuing.");
+        return false;
+      }
+      return response.ok;
+    } catch {
+      clearLoginState("Log in again before continuing.");
+      return false;
+    }
+  }
+
   function buildAuthenticatedAudioUrl(audioId) {
     return sessionRuntime.buildAuthenticatedAudioUrl({ data: { state, audioId }, deps: {} });
   }
@@ -8339,6 +9999,7 @@
   }
 
   function clearLoginState(message) {
+    const previousAuthUser = String(state.authUser || "").trim().toLowerCase();
     logRuntimeAction("auth:clear-login-state", {
       message: String(message || ""),
       authUser: state.authUser,
@@ -8378,32 +10039,20 @@
     state.lastAuthPingAt = 0;
     state.currentFile = null;
     state.pendingUpload = null;
-    state.checkpoints = [];
-    if (Array.isArray(savedPlayback.subSegs)) {
-      state.subSegs = normalizeSubSegs(savedPlayback.subSegs);
-    }
-    state.subSegValueEntries = {};
-    state.subSegDraftHtmlByKey = {};
+    resetPlaybackState();
     state.subSegCardLiveValueOverrides = {};
+    state.subSegCardCommitTimerIds = {};
+    state.subSegCardInternalChangeGuards = {};
     state.subSegCardBubbleTargetIndexByKey = {};
+    state.subSegCardSpanTargetIndexByKey = {};
     state.subSegCardFocusTransferStackByKey = {};
     state.subSegCardDeleteDialogKey = null;
-    state.audSegNoteEntries = {};
-    state.audSegNoteEditorVisible = false;
-    state.selectedSpanIndex = -1;
-    state.targetSpanIndex = -1;
-    state.targetStart = null;
-    state.targetEnd = null;
-    if (Array.isArray(savedPlayback.targetSubSegs)) {
-      state.targetSubSegs = safeClone(savedPlayback.targetSubSegs);
-    }
-    if (Number.isInteger(savedPlayback.selectedTargetSubSegIndex)) {
-      state.selectedTargetSubSegIndex = savedPlayback.selectedTargetSubSegIndex;
-    }
-    state.activeSubSegValueKey = null;
-    state.deleteTargetType = "";
-    state.deleteTargetIndex = -1;
-    state.deleteConfirmOpen = false;
+    state.subSegValueNodeIdCounter = 0;
+    state.shiftHoldTss = null;
+    state.hasAutoFocusedProgress = false;
+    state.markerSignature = "";
+    state.subSegSignature = "";
+    state.targetMarkerSignature = "";
     state.workspacePhase = "login";
     state.moduleCardIndex = 0;
     state.ingestCardIndex = 0;
@@ -8420,6 +10069,14 @@
     } catch {
       // Ignore storage failures.
     }
+    if (window.audioTestAuthStorage && typeof window.audioTestAuthStorage.clearAllAuthState === "function") {
+      window.audioTestAuthStorage.clearAllAuthState({
+        data: { username: previousAuthUser },
+        deps: {}
+      });
+    } else if (window.audioTestAuthStorage && typeof window.audioTestAuthStorage.clearLogin === "function") {
+      window.audioTestAuthStorage.clearLogin({ deps: {} });
+    }
     if (subSegValueInput) {
       subSegValueInput.innerHTML = "";
       subSegValueInput.classList.add("hidden");
@@ -8428,6 +10085,11 @@
     renderAudioCards([]);
     renderGuideFeatureBadge();
     setLoginStatus(message || "Log in to continue.", true);
+    try {
+      window.location.replace(window.location.pathname + window.location.search + window.location.hash);
+    } catch {
+      // Ignore navigation failures; the cleared UI state is still active.
+    }
   }
 
   async function saveSessionState() {
@@ -8498,6 +10160,7 @@
     }
     state.subSegValueEntries = normalizeSubSegValueEntries(savedPlayback.subSegValueEntries);
     state.subSegDraftHtmlByKey = {};
+    state.subSegCardSpanTargetIndexByKey = {};
     state.subSegCardFocusTransferStackByKey = {};
     state.audSegNoteEntries = normalizeAudSegNoteEntries(savedPlayback.audSegNoteEntries);
     state.audSegNoteEditorVisible = false;
@@ -8575,6 +10238,9 @@
     }
     if (snapshot.subSegCardBubbleTargetIndexByKey && typeof snapshot.subSegCardBubbleTargetIndexByKey === "object") {
       state.subSegCardBubbleTargetIndexByKey = safeClone(snapshot.subSegCardBubbleTargetIndexByKey);
+    }
+    if (snapshot.subSegCardSpanTargetIndexByKey && typeof snapshot.subSegCardSpanTargetIndexByKey === "object") {
+      state.subSegCardSpanTargetIndexByKey = safeClone(snapshot.subSegCardSpanTargetIndexByKey);
     }
     if (snapshot.subSegCardFocusTransferStackByKey && typeof snapshot.subSegCardFocusTransferStackByKey === "object") {
       state.subSegCardFocusTransferStackByKey = safeClone(snapshot.subSegCardFocusTransferStackByKey);
@@ -8825,6 +10491,7 @@
       subSegDraftHtmlByKey: safeClone(state.subSegDraftHtmlByKey || {}),
       subSegCardLiveValueOverrides: safeClone(state.subSegCardLiveValueOverrides || {}),
       subSegCardBubbleTargetIndexByKey: safeClone(state.subSegCardBubbleTargetIndexByKey || {}),
+      subSegCardSpanTargetIndexByKey: safeClone(state.subSegCardSpanTargetIndexByKey || {}),
       subSegCardFocusTransferStackByKey: safeClone(state.subSegCardFocusTransferStackByKey || {}),
       subSegCardDeleteDialogKey: state.subSegCardDeleteDialogKey || null,
       audSegNoteEntries: safeClone(state.audSegNoteEntries || {}),

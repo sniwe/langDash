@@ -1,0 +1,1 @@
+from focused input card rich input, if cycle-select targeting a span index, let ctrl+backspace first set target to -1

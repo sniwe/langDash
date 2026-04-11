@@ -1,0 +1,6 @@
+identify code for state and action logging (enabled in settings-popover-item)
+
+question:
+    is logging code enabled by this checkbox detailed enough to capture details of subSeg input cards? 
+        e.g.
+            i want to be able to see when a cards values are changed and content of the card data

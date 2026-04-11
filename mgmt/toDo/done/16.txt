@@ -1,0 +1,4 @@
+next, allow creation of non-contiguous spans where interposing characters do not belong to the span      
+  capture. e.g "again, this is a test span on input cards" the user may highlight "this is a" and "span",  
+  then press enter to create a non-contiguous two-part span. interposing "test" and other characters       
+  (whitespacec etc) will not be part of the span;

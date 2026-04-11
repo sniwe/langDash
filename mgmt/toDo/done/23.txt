@@ -1,0 +1,4 @@
+currently input card rich input persist triggers lacks an onInput trigger
+    i want  a 1500ms debounced persist trigger
+        the point of this is to not need to blur off the input to save and update it
+            we need this to ensure further behavios that depend on the input being at the updated state in memory work correctly

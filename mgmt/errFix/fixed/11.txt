@@ -1,0 +1,6 @@
+input card "delete" button fails delete resulting in no-op with error:
+    Uncaught ReferenceError: Cannot access 'isTextEntryFocused' before initialization
+        at handleKeyDown (app-runtime.js:714:7)Understand this error
+    app-runtime.js:7592 Uncaught ReferenceError: collectSubSegValueNodePathMap is not defined
+        at deleteSubSegValueCard (app-runtime.js:7592:32)
+        at HTMLButtonElement.<anonymous> (app-runtime.js:5554:9)

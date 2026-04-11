@@ -1,0 +1,4 @@
+
+let caret cursor position be set by the currently targeted cycle-select target (span) on focused card rich input
+    when ctrl+arrow switch span target occurs, caret is moved to end of that span
+    when target === -1, caret moves to start of rich input

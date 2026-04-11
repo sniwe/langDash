@@ -2,9 +2,9 @@
     "id":  "map:audioTest",
     "type":  "project-map",
     "name":  "audioTest",
-    "summary":  "Browser audio player. Login, restore, session save, rich editors, guide, cycle-select, idle logout, keepalive, fine-grain subSeg edit traces, and runtime log rollover.",
+    "summary":  "Browser audio player. Login, restore, session save, rich editors, guide, cycle-select, idle logout, keepalive, and runtime log rollover.",
     "root":  "C:\\Users\\Qub\\audioTest",
-    "updated":  "2026-04-11T14:26:00.0000000+08:00",
+    "updated":  "2026-04-11T12:43:00.0000000+08:00",
     "nodes":  [
                   {
                       "id":  "control:ui",
@@ -13,7 +13,7 @@
                       "summary":  "App shell. Loads frontend runtime + helpers.",
                       "features":  [
                                        {
-                                           "summary":  "Dashboard. Keyboard nav. INGEST w/ Back/Guide/Logout. Save/restore. Exact UI/focus resume. Player/guide. Cycle-select + locked labels. Hide tags on selected audSeg. Keep rich editors focused. Debounced persist. Native Enter. Ctrl+Enter blank card. Ctrl+Up/Down wrap. Ctrl+Left/Right cycle spans. Keep markup, bridges, cleanup, logging, fine-grain subSeg rich edit traces, idle logout, keepalive, modifier-safe nav. Clear subSegs from selected audSeg.",
+                                           "summary":  "Dashboard. Keyboard nav. INGEST w/ Back/Guide/Logout. Save/restore. Exact UI/focus resume. Player/guide. Cycle-select + locked labels. Hide tags on selected audSeg. Keep rich editors focused. Debounced persist. Native Enter. Ctrl+Enter blank card. Ctrl+Up/Down wrap. Ctrl+Left/Right cycle spans. Keep markup, bridges, cleanup, logging, idle logout, keepalive, modifier-safe nav. Clear subSegs from selected audSeg.",
                                            "flow":  [
                                                         "e1",
                                                         "e2",
@@ -42,10 +42,10 @@
                       "id":  "module:frontend-runtime",
                       "type":  "module",
                       "name":  "src/frontend/modules/app-runtime.js",
-                      "summary":  "Frontend orchestrator. Login/playback, restore/save, exact UI/focus resume, guide, cycle-select, lock labels, ingest Ctrl+Backspace return to post-login modules, dashboard Ctrl+Backspace logout, rich bubbles, fine-grain subSeg edit logging, idle logout, keepalive.",
+                      "summary":  "Frontend orchestrator. Login/playback, restore/save, exact UI/focus resume, guide, cycle-select, lock labels, rich bubbles, idle logout, keepalive.",
                       "features":  [
                                        {
-                                           "summary":  "Login/playback. Restore/save. Exact UI/focus resume. Guide. Cycle-select. Lock labels. Ingest Ctrl+Backspace return to post-login modules. Dashboard Ctrl+Backspace logout. Rich bubbles. Targeted child cards blank in rich input. Idle logout. Keepalive.",
+                                          "summary":  "Login/playback. Restore/save. Exact UI/focus resume. Guide. Cycle-select. Lock labels. Rich bubbles. Targeted span cards go blank in rich input. Idle logout. Keepalive.",
                                            "flow":  [
                                                         "e2",
                                                         "e3"

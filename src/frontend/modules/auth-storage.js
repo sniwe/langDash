@@ -1,8 +1,17 @@
 (function (global) {
-  const STORAGE_KEY = "audioTest.auth";
+  const STORAGE_KEY = "audioTest.auth.v4";
+  const LEGACY_STORAGE_KEYS = ["audioTest.auth", "audioTest.auth.v2", "audioTest.auth.v3"];
   const RESUME_CONTEXT_PREFIX = "audioTest.resumeContext:";
   const RESUME_CONTEXT_VERSION = 1;
   const RESUME_CONTEXT_TTL_MS = 24 * 60 * 60 * 1000;
+
+  LEGACY_STORAGE_KEYS.forEach(function (key) {
+    try {
+      global.localStorage.removeItem(key);
+    } catch {
+      // Ignore storage failures.
+    }
+  });
 
   function persistLogin(ctx) {
     const { data = {} } = ctx || {};
@@ -55,6 +64,32 @@
       return { username, token, loggedInAt, ttlMs, lastActivityAt };
     } catch {
       return null;
+    }
+  }
+
+  function clearLogin() {
+    try {
+      global.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  function clearAllAuthState() {
+    clearLogin();
+    try {
+      const keys = [];
+      for (let index = 0; index < global.localStorage.length; index += 1) {
+        const key = global.localStorage.key(index);
+        if (key && String(key).indexOf(RESUME_CONTEXT_PREFIX) === 0) {
+          keys.push(key);
+        }
+      }
+      keys.forEach(function (key) {
+        global.localStorage.removeItem(key);
+      });
+    } catch {
+      // Ignore storage failures.
     }
   }
 
@@ -154,6 +189,8 @@
     storageKey: STORAGE_KEY,
     persistLogin,
     restoreLogin,
+    clearLogin,
+    clearAllAuthState,
     buildAuthHeaders,
     buildResumeContextStorageKey,
     persistResumeContext,

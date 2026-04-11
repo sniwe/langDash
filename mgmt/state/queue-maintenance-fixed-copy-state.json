@@ -1,0 +1,10 @@
+﻿{
+    "id":  "queue-maintenance-fixed-copy-state",
+    "updated":  "2026-04-09T10:55:02.6470062+08:00",
+    "initialized":  true,
+    "seenPaths":  [
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\errFix\\fixed\\10.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\errFix\\fixed\\11.txt",
+                      "C:\\Users\\Qub\\audioTest\\mgmt\\errFix\\fixed\\9.txt"
+                  ]
+}

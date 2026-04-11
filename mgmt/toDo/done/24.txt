@@ -1,0 +1,5 @@
+check the input card of nodeid "card-mnquy9ng-1" - make sure there is no weird behavior on the spans.
+    i ask you do this because
+        the first created span was "is". i then creaeted a span to subsume it "is a test"
+            as a result cycle-select and cursor beahvior seems impacted
+            also, this is what appears to be a small detached span style preceding "is" after doing so, see C:\Users\Qub\audioTest\mgmt\DLs\dl-1.png

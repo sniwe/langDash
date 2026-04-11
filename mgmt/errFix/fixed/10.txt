@@ -1,0 +1,6 @@
+logout button removed from the wrong page. it's meant ot be on the Post-login modules top left.
+
+logout button no-op with console log error:
+    app-runtime.js:8827 Uncaught ReferenceError: savedPlayback is not defined
+    at clearLoginState (app-runtime.js:8827:23)
+    at HTMLButtonElement.handleLogoutActivate (app-runtime.js:649:5)

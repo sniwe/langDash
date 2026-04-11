@@ -2,3 +2,6 @@ developing subSeg input card child creation logic
 
     firstly, no need to create cards yet, we will just work on base marking logic:
         the user may highlight a substring on rich input. enter press while substring highlighted will cause span style to be applied to the substring.
+
+    next:
+        allow nesting of highlight spans;

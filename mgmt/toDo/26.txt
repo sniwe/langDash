@@ -1,0 +1,4 @@
+current implementatin of child subSeg input card collapse/ expand behavior triggered by ctrl+left/right arrow to cycle target onto span incorrect. to prevent serious problems, we will move one step at a time
+    1. upon entering into subSeg, default focus to rich input on first card in list; also default to cycle-select span index -1 (nothing targeted); also default to only top level items visible on list
+    2. let cycle-select of span target trigger display of associated list item, then cycle off hide again
+    3. display/not display behavior of span-associated cards currently doesnt work on freshly persisted input card items and only works after ctrl+backspace and re-enter of subSeg. we need behavior to work without needing to exit and re-enter like this
