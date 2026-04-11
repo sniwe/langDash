@@ -7982,31 +7982,92 @@
     return record;
   }
 
-  function transferSubSegCardFocusToBubbleTarget(key, pathKey, entry, inputEl) {
-    if (!entry || !inputEl) {
-      return false;
+  function getSubSegCardRenderedChildrenForFocus(key, pathKey, entry, inputEl) {
+    if (!entry) {
+      return {
+        visibleChildren: [],
+        renderChildren: [],
+        activeBubbleIndex: -1
+      };
     }
-    const displayedHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, getSubSegCardRecallStateKey(key, pathKey))
-      ? String(state.subSegCardLiveValueOverrides[getSubSegCardRecallStateKey(key, pathKey)] || "")
+    const stateKey = getSubSegCardBubbleTargetStateKey(key, pathKey);
+    const sourceHtml = Object.prototype.hasOwnProperty.call(state.subSegCardLiveValueOverrides, stateKey)
+      ? String(state.subSegCardLiveValueOverrides[stateKey] || "")
       : getSubSegEntryHtml(entry);
+    const displayedValue = getContentEditableDisplayText(inputEl, sourceHtml);
     const visibleChildren = getSubSegCardVisibleChildren({
       data: {
         entry,
         path: getSubSegValuePathArray(pathKey),
-        displayedValue: getContentEditableDisplayText(inputEl, displayedHtml)
+        displayedValue,
+        sortedChildren: getSortedChildEntries(entry && entry.children ? entry.children : [])
       },
       deps: {}
     });
-    const stateKey = getSubSegCardBubbleTargetStateKey(key, pathKey);
-    const bubbleTargetIndex = getSubSegCardBubbleTargetIndex(stateKey, visibleChildren.length);
-    if (bubbleTargetIndex < 0) {
+    const activeBubbleIndex = getSubSegCardBubbleTargetIndex(stateKey, visibleChildren.length);
+    const targetOffsets = inputEl ? getSubSegRichEditorSpanTargetSelectionOffsets(inputEl) : null;
+    const renderChildren = targetOffsets
+      ? visibleChildren.filter(function (item) {
+        return item && item.resolvedSelection &&
+          Number(item.resolvedSelection.start) === Number(targetOffsets.start) &&
+          Number(item.resolvedSelection.end) === Number(targetOffsets.end);
+      })
+      : (activeBubbleIndex >= 0 && visibleChildren[activeBubbleIndex]
+        ? [visibleChildren[activeBubbleIndex]]
+        : []);
+    return {
+      visibleChildren,
+      renderChildren,
+      activeBubbleIndex
+    };
+  }
+
+  function transferSubSegCardFocusToBubbleTarget(key, pathKey, entry, inputEl) {
+    if (!entry || !inputEl) {
       return false;
     }
-    const target = visibleChildren[bubbleTargetIndex];
+    const renderedChildrenState = getSubSegCardRenderedChildrenForFocus(key, pathKey, entry, inputEl);
+    const renderChildren = Array.isArray(renderedChildrenState.renderChildren) ? renderedChildrenState.renderChildren : [];
+    if (renderChildren.length <= 0) {
+      return false;
+    }
+    const target = renderChildren[0];
     if (!target || !target.childPathKey || !target.childEntry) {
       return false;
     }
+    const visibleChildren = Array.isArray(renderedChildrenState.visibleChildren) ? renderedChildrenState.visibleChildren : [];
+    const visibleChildIndex = visibleChildren.findIndex(function (item) {
+      return item && String(item.childPathKey || "") === String(target.childPathKey || "");
+    });
+    pushSubSegCardFocusTransfer(key, pathKey, target.childPathKey, visibleChildIndex, entry, target.childEntry);
     focusSubSegCardInput(key, target.childPathKey, false, { immediate: true });
+    return true;
+  }
+
+  function transferSubSegCardFocusToDisplayedParent(key, pathKey) {
+    const path = getSubSegValuePathArray(pathKey);
+    if (!key || path.length <= 1 || !subSegValueList) {
+      return false;
+    }
+    const parentPathKey = getSubSegValuePathKey(path.slice(0, -1));
+    const parentEntry = getSubSegValueEntry(key, parentPathKey);
+    if (!parentEntry) {
+      return false;
+    }
+    const parentSelector = ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(parentPathKey) + "\"]";
+    const parentEditor = subSegValueList.querySelector(parentSelector);
+    if (!parentEditor) {
+      return false;
+    }
+    const renderedChildrenState = getSubSegCardRenderedChildrenForFocus(key, parentPathKey, parentEntry, parentEditor);
+    const renderChildren = Array.isArray(renderedChildrenState.renderChildren) ? renderedChildrenState.renderChildren : [];
+    const isDisplayedChild = renderChildren.some(function (item) {
+      return item && String(item.childPathKey || "") === String(pathKey || "");
+    });
+    if (!isDisplayedChild) {
+      return false;
+    }
+    focusSubSegCardInput(key, parentPathKey, false, { immediate: true, preserveBubbleTarget: true });
     return true;
   }
 
@@ -8285,6 +8346,20 @@
   }
 
   function moveFocusFromSubSegCardInput(key, pathKey, delta) {
+    const entry = getSubSegValueEntry(key, pathKey);
+    const selector = subSegValueList
+      ? ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(pathKey) + "\"]"
+      : "";
+    const activeEditor = selector && subSegValueList ? subSegValueList.querySelector(selector) : null;
+    if (delta > 0 && transferSubSegCardFocusToBubbleTarget(key, pathKey, entry, activeEditor)) {
+      return;
+    }
+    if (delta < 0 && restoreSubSegCardFocusTransfer(key, pathKey)) {
+      return;
+    }
+    if (delta < 0 && transferSubSegCardFocusToDisplayedParent(key, pathKey)) {
+      return;
+    }
     const visiblePaths = getVisibleSubSegCardPathList(key);
     const totalCards = visiblePaths.length;
     if (totalCards <= 0) {

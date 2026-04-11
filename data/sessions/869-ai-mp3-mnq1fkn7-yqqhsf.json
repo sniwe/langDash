@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnq1fkn7-yqqhsf",
   "owner": "rhys",
-  "savedAt": "2026-04-11T07:10:18.344Z",
-  "updatedAt": "2026-04-11T07:10:18.344Z",
-  "revision": 283,
+  "savedAt": "2026-04-11T07:15:05.626Z",
+  "updatedAt": "2026-04-11T07:15:05.626Z",
+  "revision": 287,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -26,9 +26,9 @@
         {
           "nodeId": "card-mntzubmy-1",
           "value": "a brand new test with the refresh implemented",
-          "html": "a <span class=\"subseg-inline-highlight\" data-subseg-span-group=\"card-mntzw1dw-2\">brand <span class=\"subseg-inline-highlight subseg-inline-highlight-linked\" data-subseg-span-group=\"card-mntzwad5-4\">new</span> test</span> with the refresh implemented",
+          "html": "a <span class=\"subseg-inline-highlight is-span-target\" data-subseg-span-group=\"card-mntzw1dw-2\">brand <span class=\"subseg-inline-highlight subseg-inline-highlight-linked\" data-subseg-span-group=\"card-mntzwad5-4\">new</span> test</span> with the refresh implemented",
           "commentHtml": "",
-          "createdAt": "2026-04-11T07:10:17.266Z",
+          "createdAt": "2026-04-11T07:10:52.837Z",
           "children": [
             {
               "nodeId": "card-mntzw3nz-3",
@@ -62,8 +62,8 @@
       ]
     },
     "audSegNoteEntries": {},
-    "selectedSpanIndex": 0,
-    "currentTime": 6.870941,
+    "selectedSpanIndex": -1,
+    "currentTime": 1.673639,
     "wasPlaying": false
   },
   "audioId": "869-ai-mp3-mnq1fk8y-jnl073",
