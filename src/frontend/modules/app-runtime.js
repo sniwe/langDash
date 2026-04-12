@@ -5054,6 +5054,26 @@
       }
       return;
     }
+    if (
+      inputEl &&
+      inputEl.classList &&
+      inputEl.classList.contains("subseg-value-card-input") &&
+      (
+        inputType === "insertText" ||
+        inputType === "insertCompositionText" ||
+        inputType === "insertFromPaste" ||
+        inputType === "deleteContentBackward" ||
+        inputType === "deleteContentForward" ||
+        inputType === "deleteByCut" ||
+        inputType === "historyUndo" ||
+        inputType === "historyRedo"
+      )
+    ) {
+      scheduleSubSegCardCommitSoon(
+        String(inputEl.dataset && inputEl.dataset.subSegValueKey ? inputEl.dataset.subSegValueKey : ""),
+        String(inputEl.dataset && inputEl.dataset.subSegValuePath ? inputEl.dataset.subSegValuePath : "")
+      );
+    }
     if (inputType !== "deleteWordBackward") {
       return;
     }
@@ -5476,6 +5496,9 @@
       }]
       : null;
     if (activeRange) {
+      if (hasSubSegInlineHighlightMarkup(sourceHtml)) {
+        return normalizeSubSegRichEditorHighlightWhitespaceHtml(sourceHtml, preserveGroupId) || String(sourceHtml || textToDisplayHtml(sourceText));
+      }
       return buildSubSegInlineTaggedHtml(sourceText, activeRange, "span", "subseg-inline-highlight");
     }
     if (hasSubSegInlineHighlightMarkup(sourceHtml)) {
@@ -5587,7 +5610,7 @@
       activeBubbleIndex,
       getSubSegRichEditorPreserveGroupIdForState(key, pathKey, sourceHtml)
     );
-    const renderedHtml = activeBubbleIndex >= 0 ? "" : nextHtml;
+    const renderedHtml = nextHtml;
     if (String(editor.innerHTML || "") !== String(renderedHtml || "")) {
       editor.innerHTML = renderedHtml;
     }
@@ -5646,9 +5669,6 @@
             getSubSegRichEditorPreserveGroupIdForState(key, "", starterSourceHtml)
           );
           isTargetBubble = activeBubbleIndex >= 0;
-          if (String(starterEntry.html || "") !== String(nextHtml || "")) {
-            starterEntry.html = String(nextHtml || "");
-          }
           const starterTargetChildren = starterTargetOffsets
             ? starterVisibleChildren.filter(function (item) {
               return item && item.resolvedSelection &&
@@ -5696,9 +5716,6 @@
             getSubSegRichEditorPreserveGroupIdForState(key, pathKey, sourceHtml)
           );
           isTargetBubble = activeBubbleIndex >= 0;
-          if (String(entry.html || "") !== String(nextHtml || "")) {
-            entry.html = String(nextHtml || "");
-          }
           const targetOffsets = getSubSegRichEditorSpanTargetSelectionOffsets(editor);
           const targetChildren = targetOffsets
             ? visibleChildren.filter(function (item) {
@@ -5707,28 +5724,13 @@
                 Number(item.resolvedSelection.end) === Number(targetOffsets.end);
             })
             : [];
-          const renderChildren = targetOffsets ? targetChildren : [];
-          renderChildren.forEach(function (item, visibleIndex) {
-            const childHasFollowingBranch = Boolean((visibleIndex < (renderChildren.length - 1)) || hasFollowingBranch);
-            renderSubSegValueCardNode(
-              key,
-              item.childEntry,
-              item.childPath,
-              depth + 1,
-              visibleIndex === (renderChildren.length - 1),
-              nextAncestorGuideDepths,
-              visibleIndex + 1,
-              childHasFollowingBranch,
-              spanTargetIndex >= 0
-            );
-          });
         }
       }
       setSubSegRichEditorSpanTargetVisuals(editor, getSubSegRichEditorSpanTargetIndex(editor, getSubSegRichEditorSpanList(editor)));
       if (card) {
         card.classList.toggle("is-target-bubble", isTargetBubble);
       }
-      const renderedHtml = isTargetBubble ? "" : nextHtml;
+      const renderedHtml = nextHtml;
       if (String(editor.innerHTML || "") !== String(renderedHtml || "")) {
         editor.innerHTML = renderedHtml;
         changed = true;
@@ -5737,25 +5739,28 @@
       if (selectionOffsets) {
         restoreContentEditableSelection(editor, selectionOffsets);
       }
-      const renderChildren = spanTargetIndex >= 0 ? visibleChildren.filter(function (item) {
-        return item && item.resolvedSelection &&
-          item.resolvedSelection.start === getSubSegRichEditorSpanTargetSelectionOffsets(editor).start &&
-          item.resolvedSelection.end === getSubSegRichEditorSpanTargetSelectionOffsets(editor).end;
-      }) : [];
-      renderChildren.forEach(function (item, visibleIndex) {
-        const childHasFollowingBranch = Boolean((visibleIndex < (renderChildren.length - 1)) || hasFollowingBranch);
-        renderSubSegValueCardNode(
-          key,
-          item.childEntry,
-          item.childPath,
-          depth + 1,
-          visibleIndex === (renderChildren.length - 1),
-          nextAncestorGuideDepths,
-          visibleIndex + 1,
-          childHasFollowingBranch,
-          spanTargetIndex >= 0
-        );
-      });
+    });
+    return changed;
+  }
+
+  function commitAllSubSegCardInputValuesForKey(key) {
+    if (!key || !subSegValueList) {
+      return false;
+    }
+    const selector = ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"]";
+    const editors = subSegValueList.querySelectorAll(selector);
+    if (!editors || editors.length <= 0) {
+      return false;
+    }
+    let changed = false;
+    editors.forEach(function (editor) {
+      if (!editor) {
+        return;
+      }
+      const result = commitSubSegCardInputValue(editor, { rerender: false, restoreFocus: false });
+      if (result && result.changed) {
+        changed = true;
+      }
     });
     return changed;
   }
@@ -5785,6 +5790,7 @@
     }
 
     const focusedCommentBubbleSnapshot = captureFocusedSubSegCommentBubbleSnapshot();
+    commitAllSubSegCardInputValuesForKey(selectedKey);
     if (subSegValueInput) {
       subSegValueInput.contentEditable = "true";
       subSegValueInput.setAttribute("tabindex", "0");
@@ -6090,9 +6096,8 @@
     if (String(entry.html || "") !== String(displayedHtml || "")) {
       entry.html = String(displayedHtml || "");
     }
-    const renderedHtml = Boolean(isBubbleTarget) ? "" : displayedHtml;
-    if (String(editor.innerHTML || "") !== String(renderedHtml || "")) {
-      editor.innerHTML = renderedHtml;
+    if (String(editor.innerHTML || "") !== String(displayedHtml || "")) {
+      editor.innerHTML = displayedHtml;
     }
     const targetOffsets = getSubSegRichEditorSpanTargetSelectionOffsets(editor);
     const renderChildren = targetOffsets
@@ -6400,6 +6405,25 @@
     const inputEl = event ? event.target : null;
     const key = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValueKey || "" : "");
     const pathKey = String(inputEl && inputEl.dataset ? inputEl.dataset.subSegValuePath || "" : "");
+    const activeElement = document.activeElement;
+    const activeKey = String(activeElement && activeElement.dataset ? activeElement.dataset.subSegValueKey || "" : "");
+    const isInternalSubSegFocus = Boolean(
+      activeElement &&
+      (
+        activeElement === subSegValueInput ||
+        (
+          activeElement.classList &&
+          (
+            activeElement.classList.contains("subseg-value-card-input") ||
+            activeElement.classList.contains("subseg-value-comment-bubble")
+          ) &&
+          activeKey === key
+        )
+      )
+    );
+    if (isInternalSubSegFocus) {
+      return;
+    }
     commitSubSegCardInputValue(inputEl, { rerender: false, restoreFocus: false });
     if (key) {
       clearSubSegCardBubbleTargetsForKey(key);
@@ -6742,16 +6766,16 @@
       deps: {}
     }));
     state.subSegCardLiveValueOverrides[stateKey] = html;
-    let derivedChanged = false;
     if (entry) {
-      derivedChanged = false;
+      entry.html = html;
+      entry.value = text || htmlToPlainText(html).trim();
     }
     setSubSegCardInternalChangeGuard(key, pathKey);
     scheduleSubSegCardCommitDebounced(key, pathKey);
     requestAnimationFrame(function () {
       clearSubSegCardInternalChangeGuard(key, pathKey);
     });
-    return derivedChanged;
+    return false;
   }
 
   function handleSubSegCardInputFocus(event) {
@@ -6957,6 +6981,24 @@
         text: nextText
       }, { rerender: false, restoreFocus: false });
     }, 500);
+  }
+
+  function scheduleSubSegCardCommitSoon(key, pathKey) {
+    if (!key || !pathKey) {
+      return;
+    }
+    const stateKey = getSubSegCardRecallStateKey(key, pathKey);
+    clearSubSegCardCommitTimerByStateKey(stateKey);
+    state.subSegCardCommitTimerIds[stateKey] = window.setTimeout(function () {
+      clearSubSegCardCommitTimerByStateKey(stateKey);
+      const nextEditor = subSegValueList
+        ? subSegValueList.querySelector(".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(pathKey) + "\"]")
+        : null;
+      if (!nextEditor) {
+        return;
+      }
+      commitSubSegCardInputValue(nextEditor, { rerender: false, restoreFocus: false });
+    }, 0);
   }
 
   function getSubSegValueEntry(key, index) {
@@ -7303,12 +7345,6 @@
         childEntry.anchorEnd = nextEnd;
         changed = true;
       }
-      if (childEntry.value !== "" || childEntry.html !== "" || childEntry.commentHtml !== "") {
-        childEntry.value = "";
-        childEntry.html = "";
-        childEntry.commentHtml = "";
-        changed = true;
-      }
       if (!Array.isArray(childEntry.children)) {
         childEntry.children = [];
         changed = true;
@@ -7555,6 +7591,74 @@
       }
     });
     return changed;
+  }
+
+  function clearSubSegRichEditorSpanTargetIndexForStateKey(stateKey) {
+    const rawStateKey = String(stateKey || "");
+    if (!rawStateKey || !state.subSegCardSpanTargetIndexByKey) {
+      return false;
+    }
+    if (!Object.prototype.hasOwnProperty.call(state.subSegCardSpanTargetIndexByKey, rawStateKey)) {
+      return false;
+    }
+    delete state.subSegCardSpanTargetIndexByKey[rawStateKey];
+    return true;
+  }
+
+  function unwrapSubSegRichEditorNode(node) {
+    if (!node || !node.parentNode) {
+      return false;
+    }
+    const parent = node.parentNode;
+    while (node.firstChild) {
+      parent.insertBefore(node.firstChild, node);
+    }
+    parent.removeChild(node);
+    return true;
+  }
+
+  function clearSubSegRichEditorLinkedMarkupForEntry(entry, anchorStart, anchorEnd) {
+    if (!entry || typeof entry.html !== "string") {
+      return false;
+    }
+    const start = Math.floor(Number(anchorStart));
+    const end = Math.floor(Number(anchorEnd));
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      return false;
+    }
+    const probe = document.createElement("div");
+    probe.innerHTML = String(entry.html || "");
+    const spans = Array.from(probe.querySelectorAll(".subseg-inline-highlight"));
+    if (spans.length <= 0) {
+      return false;
+    }
+    const targetSpan = spans.find(function (span) {
+      const spanRange = getSubSegRichEditorSpanRange(probe, span);
+      const spanOffsets = spanRange ? getContentEditableSelectionOffsets(probe, spanRange) : null;
+      return Boolean(spanOffsets && spanOffsets.start === start && spanOffsets.end === end);
+    });
+    if (!targetSpan) {
+      return false;
+    }
+    const groupId = getSubSegRichEditorSpanGroupId(targetSpan);
+    let changed = false;
+    if (groupId) {
+      const groupNodes = Array.from(probe.querySelectorAll(".subseg-inline-highlight, .subseg-inline-highlight-bridge"));
+      groupNodes.forEach(function (node) {
+        if (node && getSubSegRichEditorSpanGroupId(node) === groupId) {
+          changed = unwrapSubSegRichEditorNode(node) || changed;
+        }
+      });
+    } else {
+      changed = unwrapSubSegRichEditorNode(targetSpan);
+    }
+    if (!changed) {
+      return false;
+    }
+    const nextHtml = normalizeSubSegRichEditorHighlightWhitespaceHtml(String(probe.innerHTML || ""), "");
+    entry.html = nextHtml;
+    entry.value = htmlToPlainText(nextHtml).trim();
+    return true;
   }
 
   function cycleSubSegRichEditorSpanSelection(inputEl, delta) {
@@ -8026,6 +8130,7 @@
     if (!entry || !inputEl) {
       return false;
     }
+    commitSubSegCardInputValue(inputEl, { rerender: false, restoreFocus: false });
     const renderedChildrenState = getSubSegCardRenderedChildrenForFocus(key, pathKey, entry, inputEl);
     const renderChildren = Array.isArray(renderedChildrenState.renderChildren) ? renderedChildrenState.renderChildren : [];
     if (renderChildren.length <= 0) {
@@ -8040,13 +8145,33 @@
       return item && String(item.childPathKey || "") === String(target.childPathKey || "");
     });
     pushSubSegCardFocusTransfer(key, pathKey, target.childPathKey, visibleChildIndex, entry, target.childEntry);
-    focusSubSegCardInput(key, target.childPathKey, false, { immediate: true });
+    if (visibleChildIndex >= 0) {
+      setSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, pathKey), visibleChildIndex);
+    }
+    focusSubSegCardInput(key, target.childPathKey, false, { immediate: true, preserveBubbleTarget: true });
     return true;
   }
 
   function transferSubSegCardFocusToDisplayedParent(key, pathKey) {
     const path = getSubSegValuePathArray(pathKey);
-    if (!key || path.length <= 1 || !subSegValueList) {
+    if (!key) {
+      return false;
+    }
+    if (path.length <= 1) {
+      const starterEntry = Array.isArray(state.subSegValueEntries[key]) && state.subSegValueEntries[key].length > 0
+        ? state.subSegValueEntries[key][0]
+        : null;
+      if (!starterEntry || !subSegValueInput) {
+        return false;
+      }
+      try {
+        subSegValueInput.focus({ preventScroll: true });
+      } catch {
+        subSegValueInput.focus();
+      }
+      return true;
+    }
+    if (!subSegValueList) {
       return false;
     }
     const parentPathKey = getSubSegValuePathKey(path.slice(0, -1));
@@ -8103,13 +8228,19 @@
       bubbleTargetIndex = Number.isFinite(Number(record.bubbleTargetIndex)) ? Math.floor(Number(record.bubbleTargetIndex)) : -1;
     }
     if (fromPathKey && bubbleTargetIndex >= 0) {
-      setSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, fromPathKey), -1);
+      setSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, fromPathKey), bubbleTargetIndex);
     }
     renderSubSegValuePanel();
     if (fromPathKey) {
-      focusSubSegCardInput(key, fromPathKey, false, { immediate: true });
+      focusSubSegCardInput(key, fromPathKey, false, { immediate: true, preserveBubbleTarget: true });
     } else {
-      focusTopSubSegInput();
+      if (subSegValueInput) {
+        try {
+          subSegValueInput.focus({ preventScroll: true });
+        } catch {
+          subSegValueInput.focus();
+        }
+      }
     }
     return true;
   }
@@ -8263,6 +8394,7 @@
     if (!key || !subSegValueList) {
       return false;
     }
+    commitAllSubSegCardInputValuesForKey(key);
     const path = getSubSegValuePathArray(pathKey);
     clearSubSegCardBubbleTargetsForKey(key);
     if (path.length > 1) {
@@ -8299,6 +8431,27 @@
           break;
         }
         setSubSegCardBubbleTargetIndex(parentStateKey, focusedIndex);
+      }
+    } else if (path.length === 1) {
+      const starterEntry = Array.isArray(state.subSegValueEntries[key]) && state.subSegValueEntries[key].length > 0
+        ? state.subSegValueEntries[key][0]
+        : null;
+      if (starterEntry) {
+        const starterVisibleChildren = getSubSegCardVisibleChildren({
+          data: {
+            entry: starterEntry,
+            path: [],
+            displayedValue: getContentEditableDisplayText(null, getSubSegCardDisplayedHtmlForFocus(key, "", starterEntry)),
+            sortedChildren: getSortedChildEntries(starterEntry.children || [])
+          },
+          deps: {}
+        });
+        const focusedIndex = starterVisibleChildren.findIndex(function (item) {
+          return item && String(item.childPathKey || "") === String(pathKey || "");
+        });
+        if (focusedIndex >= 0) {
+          setSubSegCardBubbleTargetIndex(getSubSegCardBubbleTargetStateKey(key, ""), focusedIndex);
+        }
       }
     }
     refreshSubSegCardEditorDisplaysForKey(key);
@@ -8351,6 +8504,9 @@
       ? ".subseg-value-card-input[data-sub-seg-value-key=\"" + cssEscapeAttr(key) + "\"][data-sub-seg-value-path=\"" + cssEscapeAttr(pathKey) + "\"]"
       : "";
     const activeEditor = selector && subSegValueList ? subSegValueList.querySelector(selector) : null;
+    if (activeEditor) {
+      commitSubSegCardInputValue(activeEditor, { rerender: false, restoreFocus: false });
+    }
     if (delta > 0 && transferSubSegCardFocusToBubbleTarget(key, pathKey, entry, activeEditor)) {
       return;
     }
@@ -8365,21 +8521,19 @@
     if (totalCards <= 0) {
       return;
     }
-    logRuntimeAction("subseg-card:move-focus", {
-      key,
-      pathKey,
-      delta,
-      visibleCount: totalCards
-    });
     const currentIndex = visiblePaths.indexOf(pathKey);
     if (currentIndex < 0) {
       return;
     }
     const nextIndex = (currentIndex + delta + totalCards) % totalCards;
     const nextPathKey = visiblePaths[nextIndex];
+    if (!nextPathKey) {
+      return;
+    }
     syncSubSegCardFocusChain(key, nextPathKey);
     renderSubSegValuePanel();
     focusSubSegCardInput(key, nextPathKey, false, { immediate: true });
+    return;
   }
 
   function insertBlankSubSegValueCardAfter(key, pathKey) {
@@ -8499,12 +8653,15 @@
     const lastIndex = path[path.length - 1];
     const parentPath = path.slice(0, -1);
     const parentNode = parentPath.length > 0 ? getSubSegValueEntry(key, parentPath) : null;
+    const parentSpanStateKey = getSubSegCardRecallStateKey(key, getSubSegValuePathKey(parentPath)) + "::span";
+    const parentEntry = parentNode || (Array.isArray(list) && list.length > 0 ? list[0] : null);
     const sourceList = parentNode
       ? (Array.isArray(parentNode.children) ? parentNode.children : null)
       : list;
     if (!sourceList || lastIndex < 0 || lastIndex >= sourceList.length) {
       return;
     }
+    const childEntry = sourceList[lastIndex];
     const visiblePathsBeforeDelete = getVisibleSubSegCardPathList(key);
     const currentVisibleIndex = visiblePathsBeforeDelete.indexOf(pathKey);
     const nextFocusPathKey = currentVisibleIndex > 0
@@ -8528,6 +8685,10 @@
         delete state.subSegCardInternalChangeGuards[k];
       }
     });
+    if (parentEntry && childEntry) {
+      clearSubSegRichEditorLinkedMarkupForEntry(parentEntry, childEntry.anchorStart, childEntry.anchorEnd);
+    }
+    clearSubSegRichEditorSpanTargetIndexForStateKey(parentSpanStateKey);
     const timerKeys = Object.keys(state.subSegCardCommitTimerIds);
     timerKeys.forEach(function (k) {
       if (k === targetPrefix || k.startsWith(targetPrefix + ".")) {

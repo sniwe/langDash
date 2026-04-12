@@ -5,11 +5,18 @@ $serverPort = 8787
 $domain = 'braggadocian-osteometrical-petronila.ngrok-free.dev'
 $serverUrl = "http://localhost:$serverPort"
 $publicUrl = "https://$domain"
+$sentinelScript = Join-Path $PSScriptRoot 'ensure-queue-sentinels.ps1'
 
 Write-Host "[audioTest] bridge start"
 Write-Host "[audioTest] root: $root"
 Write-Host "[audioTest] local: $serverUrl"
 Write-Host "[audioTest] public: $publicUrl"
+
+if (Test-Path -LiteralPath $sentinelScript) {
+  & $sentinelScript
+} else {
+  Write-Host "[audioTest] queue sentinel script missing: $sentinelScript"
+}
 
 try {
   Invoke-WebRequest -Uri $serverUrl -TimeoutSec 2 | Out-Null

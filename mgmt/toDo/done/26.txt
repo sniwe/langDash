@@ -3,3 +3,5 @@ current implementatin of child subSeg input card collapse/ expand behavior trigg
     2. let cycle-select of span target trigger display of associated list item, then cycle off hide again
     3. display/not display behavior of span-associated cards currently doesnt work on freshly persisted input card items and only works after ctrl+backspace and re-enter of subSeg. we need behavior to work without needing to exit and re-enter like this
     4. only allow ctrl+down/up arrow to transfer focus onto child card when child card displaying.
+        problem:
+            when ctrl+up/down navving, the parent's text disappears - this is unwanted behavior. 

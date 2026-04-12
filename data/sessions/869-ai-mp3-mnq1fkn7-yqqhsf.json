@@ -1,9 +1,9 @@
 {
   "id": "869-ai-mp3-mnq1fkn7-yqqhsf",
   "owner": "rhys",
-  "savedAt": "2026-04-11T07:15:05.626Z",
-  "updatedAt": "2026-04-11T07:15:05.626Z",
-  "revision": 287,
+  "savedAt": "2026-04-12T02:00:41.164Z",
+  "updatedAt": "2026-04-12T02:00:41.164Z",
+  "revision": 551,
   "file": {
     "name": "869 ｜当AI让技能变成“廉价商品”，你还剩什么？.mp3",
     "type": "audio/mpeg",
@@ -16,45 +16,20 @@
     ],
     "subSegs": [
       {
-        "start": 1.673639,
-        "end": 7.697349,
-        "createdAt": "2026-04-11T07:08:42.909Z"
+        "start": 12.49422,
+        "end": 27.893665,
+        "createdAt": "2026-04-12T01:59:29.273Z"
       }
     ],
     "subSegValueEntries": {
-      "1.674|7.697": [
+      "12.494|27.894": [
         {
-          "nodeId": "card-mntzubmy-1",
-          "value": "a brand new test with the refresh implemented",
-          "html": "a <span class=\"subseg-inline-highlight is-span-target\" data-subseg-span-group=\"card-mntzw1dw-2\">brand <span class=\"subseg-inline-highlight subseg-inline-highlight-linked\" data-subseg-span-group=\"card-mntzwad5-4\">new</span> test</span> with the refresh implemented",
+          "nodeId": "card-mnv48y10-1",
+          "value": "this is a test line",
+          "html": "this is <span class=\"subseg-inline-highlight is-span-target\" data-subseg-span-group=\"card-mnv49cp6-2\">a test</span> line",
           "commentHtml": "",
-          "createdAt": "2026-04-11T07:10:52.837Z",
-          "children": [
-            {
-              "nodeId": "card-mntzw3nz-3",
-              "value": "",
-              "html": "",
-              "commentHtml": "",
-              "createdAt": "2026-04-11T07:10:07.247Z",
-              "children": [],
-              "anchorStart": 2,
-              "anchorEnd": 16,
-              "isStarter": true,
-              "isSeedOrigin": false
-            },
-            {
-              "nodeId": "card-mntzwb13-5",
-              "value": "",
-              "html": "",
-              "commentHtml": "",
-              "createdAt": "2026-04-11T07:10:16.791Z",
-              "children": [],
-              "anchorStart": 8,
-              "anchorEnd": 11,
-              "isStarter": true,
-              "isSeedOrigin": false
-            }
-          ],
+          "createdAt": "2026-04-12T02:00:40.145Z",
+          "children": [],
           "anchorStart": null,
           "anchorEnd": null,
           "isStarter": false
@@ -62,8 +37,8 @@
       ]
     },
     "audSegNoteEntries": {},
-    "selectedSpanIndex": -1,
-    "currentTime": 1.673639,
+    "selectedSpanIndex": 0,
+    "currentTime": 12.49422,
     "wasPlaying": false
   },
   "audioId": "869-ai-mp3-mnq1fk8y-jnl073",

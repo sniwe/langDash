@@ -1,0 +1,16 @@
+
+currently developing subseg input cards, one step at a time.
+scan relevant code under /src to prime context for development edits. 
+scan in detail:
+    the subSeg card list:
+        keypress actions
+        data structures
+        persistence behavior
+
+1
+    first prepartory edit:
+        if a child card is deleted (via ctrl+shift+backspace -> delete button), let the assocaited span on the parent card input be reverted to normal rich text (have span style deleted)
+            e.g. 
+                top-level card "but i had failed to consider an important point" with span "had"
+                user deletes child card linked to "had"
+                => child card deleted, span on top-level removed

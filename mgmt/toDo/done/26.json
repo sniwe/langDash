@@ -4,7 +4,7 @@
     "name":  "audioTest",
     "summary":  "Browser audio player. Login, restore, session save, rich editors, guide, cycle-select, idle logout, keepalive, fine-grain subSeg edit traces, and runtime log rollover.",
     "root":  "C:\\Users\\Qub\\audioTest",
-    "updated":  "2026-04-12T09:57:08.7866232+08:00",
+    "updated":  "2026-04-11T14:26:00.0000000+08:00",
     "nodes":  [
                   {
                       "id":  "control:ui",
